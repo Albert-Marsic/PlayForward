@@ -24,6 +24,13 @@ Kratko opisati cilj Vašeg projekta. Vaša motivacija?  (Napomena: odgovor nije 
 #Instalcija
 # Članovi tima 
 > Popis članova tima/linkovi/ glavni doprinos
+[Ante Boban](https://github.com/ab010404)
+[Filip Radanović](https://github.com/ficoki)
+[Filip Tojčić](https://github.com/filiptojcic)
+[Hrvoje Juračić](https://github.com/hrvojejuracic)
+[Martin Vrbovčan](https://github.com/MartinVrbovcan)
+[Patrik Modrić](https://github.com/papi-5)
+[Albert Maršić](https://github.com/Albert-Marsic)
 >
 
 # Kontribucije
