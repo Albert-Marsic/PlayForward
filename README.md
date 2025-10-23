@@ -26,13 +26,13 @@ Cilj projekta je razviti vještine rda u timu svakog člana. Svaki čan tima bi 
 #Instalcija
 # Članovi tima 
 > Popis članova tima/linkovi/ glavni doprinos
-[Ante Boban](https://github.com/ab010404)
-[Filip Radanović](https://github.com/ficoki)
-[Filip Tojčić](https://github.com/filiptojcic)
-[Hrvoje Juračić](https://github.com/hrvojejuracic)
-[Martin Vrbovčan](https://github.com/MartinVrbovcan)
-[Patrik Modrić](https://github.com/papi-5)
-[Albert Maršić](https://github.com/Albert-Marsic)
+>[Ante Boban](https://github.com/ab010404)
+>[Filip Radanović](https://github.com/ficoki)
+>[Filip Tojčić](https://github.com/filiptojcic)
+>[Hrvoje Juračić](https://github.com/hrvojejuracic)
+>[Martin Vrbovčan](https://github.com/MartinVrbovcan)
+>[Patrik Modrić](https://github.com/papi-5)
+>[Albert Maršić](https://github.com/Albert-Marsic)
 >
 
 # Kontribucije
