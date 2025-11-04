@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { Routes, Route, Link } from "react-router-dom"
+import { useState } from "react"
 import { Button } from '@/components/ui/button'
 import {
   NavigationMenu,
@@ -11,6 +12,8 @@ import {
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"
 
+import Home from "./pages/Home"
+import Prijava from "./pages/Prijava"
 import './App.css'
 
 function App() {
@@ -29,21 +32,20 @@ function App() {
           </NavigationMenuItem>
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
-              <a href="/prijava">Prijava</a>
+              <Link to="/prijava">Prijava</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
-      <h1>PlayForward stranica!</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <div className="flex flex-col items-center justify-center">
-          <Button>Click me</Button>
-        </div>
-
-      </div>
+      
+      
+      <main className="p-4">
+        Router!
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/prijava" element={<Prijava />} />
+        </Routes>
+      </main>
     </>
   )
 }
