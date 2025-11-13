@@ -5,7 +5,7 @@ export default function Page_404() {
     <div className="min-h-screen flex flex-col">
       {/* Glavni sadržaj */}
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4 bg-gray-50">
-        <img src ="/public/Error.png" alt="Stranica nije pronađena" className="w-58 h-auto"></img>
+        <img src ="/Error.png" alt="Stranica nije pronađena" className="w-58 h-auto"></img>
         
         <h1 className="text-6xl font-extrabold text-gray-900 mb-4">404</h1>
         <p className="text-xl text-gray-600 mb-8">
