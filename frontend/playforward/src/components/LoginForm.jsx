@@ -48,7 +48,7 @@ export function LoginForm({
           </Button>
           <FieldDescription className="text-center">
             Nemate korisnički račun? {" "}
-            <Link to="/register" className="underline underline-offset-4">
+            <Link to="/registracija" className="underline underline-offset-4">
               Napravite račun
             </Link>
           </FieldDescription>
