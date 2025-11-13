@@ -16,7 +16,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/prijava" element={<Prijava />} />
           <Route path="/registracija" element={<Registracija />} />
-          
+          <Route path="*" element={<Page_404 />}/>
         </Routes>
       </main>
     </>
