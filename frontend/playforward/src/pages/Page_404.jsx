@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 
 export default function Page_404() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col">
       {/* Glavni sadržaj */}
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4 bg-gray-50">
         <img src ="/Error.png" alt="Stranica nije pronađena" className="w-58 h-auto"></img>
