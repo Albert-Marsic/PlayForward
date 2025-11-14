@@ -11,12 +11,12 @@ export default function ToysPage() {
         {fakeData.map(toy => (
           <div
             key={toy.idIgracka}
-            className="border rounded-lg p-4 shadow bg-white"
+            className="border rounded-lg p-4 shadow bg-white "
           >
             <img
               src={toy.fotografija}
               alt={toy.naziv}
-              className="w-full h-90 object-cover rounded"
+              className="w-full h-90 object-cover rounded max-h-[300px]"
             />
 
             <h2 className="text-lg font-semibold mt-2">{toy.naziv}</h2>

@@ -1,6 +1,7 @@
 import ToyCard from './ToyCard'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function RecentToys() {
   return (
@@ -24,14 +25,16 @@ export default function RecentToys() {
 
         {/* See More Button */}
         <div className="text-center">
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-2 border-red-600 text-red-600 hover:bg-red-50 px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
-          >
-            Pregledaj sve igračke
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <Link to="/igracke">
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-2 border-red-600 text-red-600 hover:bg-red-50 px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
+            >
+              Pregledaj sve igračke
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
