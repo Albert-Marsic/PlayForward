@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Search } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '@/context/AuthContext'
 
 export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { user, loading, logout } = useAuth()
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -36,7 +38,7 @@ export default function Navbar() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Pretra≈æi igraƒçke..."
+                placeholder="Pretraûi igraËke..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 pl-10 pr-4 text-gray-700 bg-gray-100 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
@@ -45,21 +47,52 @@ export default function Navbar() {
             </div>
           </form>
 
-          {/* Right side - Login button */}
+          {/* Right side */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="ghost"
               className="text-gray-700 hover:text-red-600 hidden md:inline-flex"
               asChild
             >
-              <Link to="/">Poƒçetna</Link>
+              <Link to="/">PoËetna</Link>
             </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700 text-white rounded-full"
-              asChild
-            >
-              <Link to="/prijava">Prijava</Link>
-            </Button>
+
+            {user ? (
+              <>
+                <Button variant="ghost" className="hidden md:inline-flex" asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <div className="flex items-center gap-3 pl-2">
+                  {user.picture && (
+                    <img
+                      src={user.picture}
+                      alt={user.name ?? user.email}
+                      className="w-8 h-8 rounded-full border hidden md:block"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  <div className="text-sm text-gray-700 hidden lg:block">
+                    <p className="font-semibold leading-tight">{user.name ?? user.email}</p>
+                    <p className="text-xs text-gray-500">{user.email}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={logout}
+                  disabled={loading}
+                >
+                  Odjava
+                </Button>
+              </>
+            ) : (
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white rounded-full"
+                asChild
+              >
+                <Link to="/prijava">Prijava</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>
