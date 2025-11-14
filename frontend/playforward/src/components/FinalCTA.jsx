@@ -42,7 +42,7 @@ export default function FinalCTA() {
               className="bg-white text-red-600 hover:bg-gray-100 px-8 py-6 text-lg rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 font-semibold"
               asChild
             >
-              <Link to="/prijava">Registriraj se sada</Link>
+              <Link to="/prijava">Prijavi se sada</Link>
             </Button>
             <Button
               size="lg"
