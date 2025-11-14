@@ -4,6 +4,7 @@ import Home from "./pages/Home"
 import Prijava from "./pages/Prijava"
 import Page_404 from "./pages/Page_404"
 import Registracija from "./pages/Registracija"
+import Donacija from "./pages/Donacija"
 import Dashboard from "./pages/Dashboard"
 import './App.css'
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/prijava" element={<Prijava />} />
           <Route path="/registracija" element={<Registracija />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/doniraj" element={<Donacija />} />
           <Route path="*" element={<Page_404 />}/>
         </Routes>
       </main>
