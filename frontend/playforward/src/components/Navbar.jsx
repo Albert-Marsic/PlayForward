@@ -38,7 +38,7 @@ export default function Navbar() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Pretrai igraèke..."
+                placeholder="PretraÅ¾i igraÄke..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 pl-10 pr-4 text-gray-700 bg-gray-100 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
@@ -54,7 +54,7 @@ export default function Navbar() {
               className="text-gray-700 hover:text-red-600 hidden md:inline-flex"
               asChild
             >
-              <Link to="/">Poèetna</Link>
+              <Link to="/">PoÄetna</Link>
             </Button>
 
             {user ? (
