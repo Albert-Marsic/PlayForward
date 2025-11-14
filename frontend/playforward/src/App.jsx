@@ -6,6 +6,7 @@ import Page_404 from "./pages/Page_404"
 import Registracija from "./pages/Registracija"
 import Donacija from "./pages/Donacija"
 import Dashboard from "./pages/Dashboard"
+import ToysPage from "./pages/ToysPage"
 import './App.css'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/registracija" element={<Registracija />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/doniraj" element={<Donacija />} />
+          <Route path="/igracke" element={<ToysPage />} />
           <Route path="*" element={<Page_404 />}/>
         </Routes>
       </main>
