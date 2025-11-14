@@ -24,6 +24,16 @@ Cilj projekta je razviti vještine rda u timu svakog člana. Svaki čan tima bi 
 # Tehnologije
 
 #Instalcija
+
+## Konfiguracija okruženja
+Za lokalni razvoj podaci za OAuth i frontend URL već imaju zadane vrijednosti u `backend/demo/src/main/resources/application.properties`.  
+Za produkciju (npr. Render) postavite sljedeće varijable okruženja prije pokretanja backend aplikacije:
+
+- `GOOGLE_CLIENT_ID` – OAuth2 Client ID dobiven u Google Cloud Consoleu (mora odgovarati URI-ju za povrat na backend).
+- `GOOGLE_CLIENT_SECRET` – pripadajući Client Secret.
+- `APP_FRONTEND_URL` – javni URL frontend aplikacije (koristi se za CORS i redirect nakon uspješne prijave).
+
+Ako varijable nisu zadane, aplikacija koristi lokalne vrijednosti navedene u `application.properties`.
 # Članovi tima 
 > Popis članova tima/linkovi/ glavni doprinos
 >[Ante Boban](https://github.com/ab010404)
