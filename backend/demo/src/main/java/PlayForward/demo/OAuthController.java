@@ -47,9 +47,12 @@ public class OAuthController {
     public ResponseEntity<?> logout(HttpServletRequest request,
                                     HttpServletResponse response,
                                     Authentication authentication) {
+        // For JWT-based authentication, logout is handled on the frontend
+        // by removing the token from localStorage
+        // We still clear the SecurityContext for good measure
         if (authentication != null) {
             new SecurityContextLogoutHandler().logout(request, response, authentication);
         }
-        return ResponseEntity.ok(Map.of("success", true));
+        return ResponseEntity.ok(Map.of("success", true, "message", "Logged out successfully"));
     }
 }
