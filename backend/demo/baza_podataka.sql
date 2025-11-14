@@ -71,3 +71,6 @@ CREATE TABLE RECENZIJA (
     FOREIGN KEY (IDPrimatelj) REFERENCES PRIMATELJ(IDPrimatelj),
     FOREIGN KEY (IDDonator) REFERENCES DONATOR(IDDonator)
 );
+
+INSERT INTO KORISNIK (IDKorisnik, imeKorisnik ,email)
+VALUES (1, 'Albert', 'abi@mail.com');

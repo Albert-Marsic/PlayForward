@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Search } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '@/context/AuthContext'
 
 export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { user, loading, logout } = useAuth()
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -45,7 +47,7 @@ export default function Navbar() {
             </div>
           </form>
 
-          {/* Right side - Login button */}
+          {/* Right side */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="ghost"
@@ -54,12 +56,43 @@ export default function Navbar() {
             >
               <Link to="/">Početna</Link>
             </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700 text-white rounded-full"
-              asChild
-            >
-              <Link to="/prijava">Prijava</Link>
-            </Button>
+
+            {user ? (
+              <>
+                <Button variant="ghost" className="hidden md:inline-flex" asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <div className="flex items-center gap-3 pl-2">
+                  {user.picture && (
+                    <img
+                      src={user.picture}
+                      alt={user.name ?? user.email}
+                      className="w-8 h-8 rounded-full border hidden md:block"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  <div className="text-sm text-gray-700 hidden lg:block">
+                    <p className="font-semibold leading-tight">{user.name ?? user.email}</p>
+                    <p className="text-xs text-gray-500">{user.email}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={logout}
+                  disabled={loading}
+                >
+                  Odjava
+                </Button>
+              </>
+            ) : (
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white rounded-full"
+                asChild
+              >
+                <Link to="/prijava">Prijava</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -1,23 +1,27 @@
-import { Routes, Route, useLocation } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Home from "./pages/Home"
 import Prijava from "./pages/Prijava"
 import Page_404 from "./pages/Page_404"
+import Registracija from "./pages/Registracija"
+import Donacija from "./pages/Donacija"
+import Dashboard from "./pages/Dashboard"
+import ToysPage from "./pages/ToysPage"
 import './App.css'
 
 function App() {
-
-  const location = useLocation();
-  const hideNavbar = location.pathname !== "/" && location.pathname !== "/prijava";
-
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      <Navbar />
 
       <main className="pt-16">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/prijava" element={<Prijava />} />
+          <Route path="/registracija" element={<Registracija />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/doniraj" element={<Donacija />} />
+          <Route path="/igracke" element={<ToysPage />} />
           <Route path="*" element={<Page_404 />}/>
         </Routes>
       </main>
