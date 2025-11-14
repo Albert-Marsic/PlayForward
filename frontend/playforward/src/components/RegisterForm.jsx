@@ -18,11 +18,11 @@ export function RegisterForm({ className, ...props}) {
                     <Input id="email" type="email" placeholder="legionar@example.com"required/> 
                 </Field> 
                 <Field> 
-                    <FieldLabel htmlFor="password">Password</FieldLabel> 
+                    <FieldLabel htmlFor="password">Lozinka</FieldLabel> 
                     <Input id="password" type="password" required/> 
                 </Field> 
                 <Field> 
-                    <FieldLabel htmlFor="confirmPassword">Potvrdi šifru</FieldLabel> 
+                    <FieldLabel htmlFor="confirmPassword">Potvrdi lozinku</FieldLabel> 
                     <Input id="confirmPassword" type="password" required/> 
                 </Field> 
                 <Field> 
