@@ -1,4 +1,5 @@
 # Build
+ENV VITE_API_BASE_URL=https://playforward-backend.onrender.com
 FROM node:20 AS build
 WORKDIR /app
 
