@@ -1,4 +1,6 @@
 import fakeData from "@/data/myFakeData";
+import { Button } from "@/components/ui/button"
+import { Link } from 'react-router-dom'
 
 export default function ToysPage() {
   return (
@@ -14,7 +16,7 @@ export default function ToysPage() {
             <img
               src={toy.fotografija}
               alt={toy.naziv}
-              className="w-full h-40 object-cover rounded"
+              className="w-full h-90 object-cover rounded"
             />
 
             <h2 className="text-lg font-semibold mt-2">{toy.naziv}</h2>
@@ -24,6 +26,14 @@ export default function ToysPage() {
             <p className="text-sm text-gray-600">Status: {toy.status}</p>
           </div>
         ))}
+      </div>
+
+      <div className="flex justify-center mt-10">
+        <Button variant="outline" type="button">
+          <Link to="/doniraj">
+            Doniraj igračku
+          </Link>
+        </Button>
       </div>
     </div>
   );
