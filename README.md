@@ -17,6 +17,8 @@ Cilj projekta je razviti vještine rda u timu svakog člana. Svaki čan tima bi 
 
 > Dobro izrađen opis omogućuje vam da pokažete svoj rad drugim programerima, kao i potencijalnim poslodavcima. Ne samo da prvi dojam na stranici opisa često razlikuje dobar projekt od lošeg projekta već i predstavlja dobru praksu koju morate savladati.
 
+Web aplikacija na linku: [PlayForward](https://playforward.onrender.com)
+
 # Funkcijski zahtjevi
 > Navedite ključne zahtjeve Vašeg projekta.
 
