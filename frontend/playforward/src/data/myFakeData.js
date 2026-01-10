@@ -7,6 +7,7 @@ const fakeData = [
     fotografija: "medo.jpg",
     status: "dostupno",
     uvjeti: "nema",
+    cijena: 5,
     idDonator: 2,
     idPrimatej: null
   },
@@ -18,6 +19,7 @@ const fakeData = [
     fotografija: "lego_set.jpeg",
     status: "dostupno",
     uvjeti: "starije od 3 godine",
+    cijena: 10,
     idDonator: 4,
     idPrimatej: null
   }

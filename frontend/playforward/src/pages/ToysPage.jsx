@@ -84,6 +84,9 @@ export default function ToysPage() {
             <p className="text-sm text-gray-600">
               Status: {toy.status}
             </p>
+            <p className="text -sm text-gray-600">
+              Cijena: {toy.cijena} EUR
+            </p>
           </Link>
         ))}
       </div>

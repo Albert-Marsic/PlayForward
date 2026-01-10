@@ -5,13 +5,17 @@ import { Link } from "react-router-dom";
 export default function Kosarica() {
   const { cartItems, removeFromCart, clearCart } = useCart();
 
+  const totalPrice = cartItems.reduce((total, toy) => total + parseFloat(toy.cijena), 0).toFixed(2);  //reduce pretvara niz u vrijednost, total = trenutni zbroj, toy = trenutna igračka, 0 = početna vrijednost
+
   if (cartItems.length === 0) {
     return (
       <div className="p-6 text-center">
         <h1 className="text-xl font-bold">Košarica je prazna 🛒</h1>
-        <Link to="/igracke" className="underline">
-          Povratak na igračke
-        </Link>
+        <Button asChild>
+          <Link to="/igracke" className="underline">
+            Povratak na igračke
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -26,6 +30,7 @@ export default function Kosarica() {
           <div className="flex-1">
             <h2 className="font-semibold">{toy.naziv}</h2>
             <p>{toy.kategorija}</p>
+            <p>Cijena: {toy.cijena}</p>
           </div>
           <Button variant="outline" onClick={() => removeFromCart(toy.idIgracka)}>
             Ukloni
@@ -33,11 +38,19 @@ export default function Kosarica() {
         </div>
       ))}
 
+      
+      <div className="flx justify-between mt-6">
+        <Button variant="outline">Ukupna cijena: {totalPrice} EUR</Button>
+      </div>
+    
+
       <div className="flex justify-between mt-6">
         <Button variant="outline" onClick={clearCart}>
           Očisti
         </Button>
-        <Button>Zatraži igračke</Button>
+        <Button asChild>
+          <Link to="/kupovina">Zatraži igračke</Link>
+        </Button>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";  //createContext = globalni kontenjer, useContext = čita podatke iz kontenjera, useState = lokalno stanje
 
 const CartContext = createContext();
 
@@ -6,15 +6,15 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
 
   const addToCart = (toy) => {
-    setCartItems((prev) => {
+    setCartItems((prev) => {  //prev = prethodno stanje
       const exists = prev.find(item => item.idIgracka === toy.idIgracka);
       if (exists) return prev; // ne dodaj duplo
-      return [...prev, toy];
+      return [...prev, toy];  //dodaj kopiju starog niza s novom igračkom
     });
   };
 
   const removeFromCart = (id) => {
-    setCartItems(prev => prev.filter(item => item.idIgracka !== id));
+    setCartItems(prev => prev.filter(item => item.idIgracka !== id)); //filter = zadrži one koje zadovoljavaju uvjet
   };
 
   const clearCart = () => setCartItems([]);
