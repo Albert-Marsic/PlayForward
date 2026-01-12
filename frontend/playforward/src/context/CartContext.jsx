@@ -1,23 +1,36 @@
-import { createContext, useContext, useState } from "react";  //createContext = globalni kontenjer, useContext = čita podatke iz kontenjera, useState = lokalno stanje
+import { createContext, useContext, useEffect, useState } from "react";
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState([]);
+
+  // 1️⃣ inicijalno stanje čitamo iz localStorage
+  const [cartItems, setCartItems] = useState(() => {
+    const storedCart = localStorage.getItem("cart");
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
+
+  // 2️⃣ svaki put kad se košarica promijeni → spremi
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const addToCart = (toy) => {
-    setCartItems((prev) => {  //prev = prethodno stanje
+    setCartItems(prev => {
       const exists = prev.find(item => item.idIgracka === toy.idIgracka);
-      if (exists) return prev; // ne dodaj duplo
-      return [...prev, toy];  //dodaj kopiju starog niza s novom igračkom
+      if (exists) return prev; // nema duplikata
+      return [...prev, toy];
     });
   };
 
   const removeFromCart = (id) => {
-    setCartItems(prev => prev.filter(item => item.idIgracka !== id)); //filter = zadrži one koje zadovoljavaju uvjet
+    setCartItems(prev => prev.filter(item => item.idIgracka !== id));
   };
 
-  const clearCart = () => setCartItems([]);
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem("cart");
+  };
 
   return (
     <CartContext.Provider value={{
