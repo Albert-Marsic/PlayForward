@@ -30,7 +30,7 @@ export default function Kosarica() {
           <div className="flex-1">
             <h2 className="font-semibold">{toy.naziv}</h2>
             <p>{toy.kategorija}</p>
-            <p>Cijena: {toy.cijena}</p>
+            <p>Cijena: {toy.cijena.toFixed(2)} €</p>
           </div>
           <Button variant="outline" onClick={() => removeFromCart(toy.idIgracka)}>
             Ukloni
@@ -40,7 +40,7 @@ export default function Kosarica() {
 
       
       <div className="flx justify-between mt-6">
-        <Button variant="outline">Ukupna cijena: {totalPrice} EUR</Button>
+        <Button variant="outline">Ukupna cijena: {totalPrice} €</Button>
       </div>
     
 

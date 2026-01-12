@@ -65,7 +65,7 @@ export default function CheckoutPage() {
         {cartItems.map(toy => (
           <div key={toy.idIgracka} className="flex justify-between mb-2">
             <span>{toy.naziv}</span>
-            <span>{toy.cijena} €</span>
+            <span>{toy.cijena.toFixed(2)} €</span>
           </div>
         ))}
 
@@ -99,16 +99,6 @@ export default function CheckoutPage() {
             className="border rounded px-3 py-2"
           />
         </div>
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-          className="border rounded px-3 py-2"
-        />
 
         <input
           type="text"
