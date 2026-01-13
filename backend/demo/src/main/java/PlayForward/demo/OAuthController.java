@@ -113,14 +113,12 @@ public class OAuthController {
         }
 
         String name = principal.getAttribute("name");
-        if (name == null || name.isBlank()) {
-            name = email;
-        }
+        final String displayName = (name == null || name.isBlank()) ? email : name;
 
         Korisnik korisnik = korisnikRepository.findByEmail(email).orElseGet(() -> {
             Korisnik newUser = new Korisnik();
             newUser.setEmail(email);
-            newUser.setImeKorisnik(name);
+            newUser.setImeKorisnik(displayName);
             return korisnikRepository.save(newUser);
         });
 
