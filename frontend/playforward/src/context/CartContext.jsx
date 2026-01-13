@@ -2,17 +2,40 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const CartContext = createContext();
 
+// Helper funkcije za rad s cookiesima (session cookies)
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop().split(';').shift();
+  }
+  return null;
+};
+
+const setCookie = (name, value) => {
+  // Session cookie - bez expiration date, briše se kada se browser zatvori
+  document.cookie = `${name}=${value}; path=/`;
+};
+
+const removeCookie = (name) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 2026 00:00:00 UTC; path=/;`;
+};
+
 export function CartProvider({ children }) {
 
-  // 1️⃣ inicijalno stanje čitamo iz localStorage
+  // inicijalno stanje čitamo iz cookie-a
   const [cartItems, setCartItems] = useState(() => {
-    const storedCart = localStorage.getItem("cart");
-    return storedCart ? JSON.parse(storedCart) : [];
+    const storedCart = getCookie("cart");
+    return storedCart ? JSON.parse(decodeURIComponent(storedCart)) : [];
   });
 
-  // 2️⃣ svaki put kad se košarica promijeni → spremi
+  // svaki put kad se košarica promijeni, spremi u cookie
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
+    if (cartItems.length > 0) {
+      setCookie("cart", encodeURIComponent(JSON.stringify(cartItems)));
+    } else {
+      removeCookie("cart");
+    }
   }, [cartItems]);
 
   const addToCart = (toy) => {
@@ -29,7 +52,7 @@ export function CartProvider({ children }) {
 
   const clearCart = () => {
     setCartItems([]);
-    localStorage.removeItem("cart");
+    removeCookie("cart");
   };
 
   return (
