@@ -18,8 +18,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Autowired
     private JwtTokenProvider tokenProvider;
 
-    @Value("${app.frontend.url}")
-    private String frontendUrl;
+    @Value("${app.frontend.urls:http://localhost:5173}")
+    private String frontendUrls;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -39,7 +39,20 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         Authentication authentication) {
         String token = tokenProvider.generateToken(authentication);
 
-        return UriComponentsBuilder.fromUriString(frontendUrl + "/dashboard")
+        java.util.List<String> origins = java.util.Arrays.stream(frontendUrls.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+
+        String requestOrigin = request.getHeader("Origin");
+        String base;
+        if (requestOrigin != null && origins.contains(requestOrigin)) {
+            base = requestOrigin;
+        } else {
+            base = origins.get(0);
+        }
+
+        return UriComponentsBuilder.fromUriString(base + "/dashboard")
                 .queryParam("token", token)
                 .build().toUriString();
     }
