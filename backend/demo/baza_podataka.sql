@@ -1,8 +1,25 @@
-CREATE TYPE stanje_igracke AS ENUM ('novo', 'korišteno');
-CREATE TYPE status_igracke AS ENUM ('dostupno', 'rezervirano');
-CREATE TYPE status_popisa_igracaka AS ENUM ('potrebno', 'donirano');
+DO $$
+BEGIN
+    CREATE TYPE stanje_igracke AS ENUM ('novo', 'korišteno');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TABLE KORISNIK (
+DO $$
+BEGIN
+    CREATE TYPE status_igracke AS ENUM ('dostupno', 'rezervirano');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$
+BEGIN
+    CREATE TYPE status_popisa_igracaka AS ENUM ('potrebno', 'donirano');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS KORISNIK (
     IDKorisnik INT GENERATED ALWAYS AS IDENTITY NOT NULL,
     imeKorisnik VARCHAR(20) NOT NULL,
     email VARCHAR(50) NOT NULL,
@@ -10,25 +27,25 @@ CREATE TABLE KORISNIK (
     UNIQUE (email)
 );
 
-CREATE TABLE ADMIN (
+CREATE TABLE IF NOT EXISTS ADMIN (
     IDAdmin INT NOT NULL,
     PRIMARY KEY (IDAdmin),
     FOREIGN KEY (IDAdmin) REFERENCES KORISNIK(IDKorisnik)
 );
 
-CREATE TABLE PRIMATELJ (
+CREATE TABLE IF NOT EXISTS PRIMATELJ (
     IDPrimatelj INT NOT NULL,
     PRIMARY KEY (IDPrimatelj),
     FOREIGN KEY (IDPrimatelj) REFERENCES KORISNIK(IDKorisnik)
 );
 
-CREATE TABLE DONATOR (
+CREATE TABLE IF NOT EXISTS DONATOR (
     IDDonator INT NOT NULL,
     PRIMARY KEY (IDDonator),
     FOREIGN KEY (IDDonator) REFERENCES KORISNIK(IDKorisnik)
 );
 
-CREATE TABLE IGRACKA (
+CREATE TABLE IF NOT EXISTS IGRACKA (
     IDIgracka INT GENERATED ALWAYS AS IDENTITY NOT NULL,
     naziv VARCHAR(20) NOT NULL,
     kategorija VARCHAR(20) NOT NULL,
@@ -43,7 +60,7 @@ CREATE TABLE IGRACKA (
     FOREIGN KEY (IDPrimatelj) REFERENCES PRIMATELJ(IDPrimatelj)
 );
 
-CREATE TABLE KAMPANJA (
+CREATE TABLE IF NOT EXISTS KAMPANJA (
     IDKampanja INT GENERATED ALWAYS AS IDENTITY NOT NULL,
     rokTrajanja DATE NOT NULL,
     napredak VARCHAR(100) NOT NULL,
@@ -52,7 +69,7 @@ CREATE TABLE KAMPANJA (
     FOREIGN KEY (IDPrimatelj) REFERENCES PRIMATELJ(IDPrimatelj)
 );
 
-CREATE TABLE POPIS_IGRACAKA (
+CREATE TABLE IF NOT EXISTS POPIS_IGRACAKA (
     nazivIgracke VARCHAR(20) NOT NULL,
     kolicina INT NOT NULL,
     status status_popisa_igracaka NOT NULL,
@@ -61,7 +78,7 @@ CREATE TABLE POPIS_IGRACAKA (
     FOREIGN KEY (IDKampanja) REFERENCES KAMPANJA(IDKampanja)
 );
 
-CREATE TABLE RECENZIJA (
+CREATE TABLE IF NOT EXISTS RECENZIJA (
     IDRecenzija INT GENERATED ALWAYS AS IDENTITY NOT NULL,
     ocjena INT NOT NULL CHECK (ocjena BETWEEN 1 AND 5),
     tekst VARCHAR(100) NOT NULL,
@@ -72,5 +89,6 @@ CREATE TABLE RECENZIJA (
     FOREIGN KEY (IDDonator) REFERENCES DONATOR(IDDonator)
 );
 
-INSERT INTO KORISNIK (IDKorisnik, imeKorisnik ,email)
-VALUES (1, 'Albert', 'abi@mail.com');
+INSERT INTO KORISNIK (imeKorisnik, email)
+VALUES ('Albert', 'abi@mail.com')
+ON CONFLICT (email) DO NOTHING;
