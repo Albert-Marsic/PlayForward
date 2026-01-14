@@ -1,0 +1,5 @@
+ALTER TABLE korisnik
+    ALTER COLUMN imekorisnik TYPE VARCHAR(100);
+
+ALTER TABLE korisnik
+    ALTER COLUMN email TYPE VARCHAR(255);

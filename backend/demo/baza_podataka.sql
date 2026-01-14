@@ -4,8 +4,8 @@ CREATE TYPE status_popisa_igracaka AS ENUM ('potrebno', 'donirano');
 
 CREATE TABLE KORISNIK (
     IDKorisnik INT GENERATED ALWAYS AS IDENTITY NOT NULL,
-    imeKorisnik VARCHAR(20) NOT NULL,
-    email VARCHAR(50) NOT NULL,
+    imeKorisnik VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
     PRIMARY KEY (IDKorisnik),
     UNIQUE (email)
 );

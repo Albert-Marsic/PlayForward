@@ -11,10 +11,10 @@ public class Korisnik {
     @Column(name = "idkorisnik")
     private Long id;
 
-    @Column(name = "imekorisnik", length = 20, nullable = false)
+    @Column(name = "imekorisnik", length = 100, nullable = false)
     private String imeKorisnik;
 
-    @Column(name = "email", length = 50, nullable = false, unique = true)
+    @Column(name = "email", length = 255, nullable = false, unique = true)
     private String email;
 
     public Korisnik() {}
