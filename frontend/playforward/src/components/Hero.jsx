@@ -46,7 +46,7 @@ export default function Hero() {
                   className="border-2 border-red-600 text-red-600 hover:bg-red-50 px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300"
                   asChild
                 >
-                  <Link to={user ? "/igracke" : "/prijava"}>Potraži igračku</Link>
+                  <Link to="/igracke">Potraži igračku</Link>
                 </Button>
               </div>
             </div>
