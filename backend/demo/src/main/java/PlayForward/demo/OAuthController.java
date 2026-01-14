@@ -135,15 +135,21 @@ public class OAuthController {
             if ("DONATOR".equals(desiredRole)) {
                 Donator donator = new Donator();
                 donator.setKorisnik(korisnik);
-                donatorRepository.save(donator);
+                donatorRepository.saveAndFlush(donator);
             } else {
                 Primatelj primatelj = new Primatelj();
                 primatelj.setKorisnik(korisnik);
-                primateljRepository.save(primatelj);
+                primateljRepository.saveAndFlush(primatelj);
             }
         }
 
-        return ResponseEntity.ok(Map.of("role", desiredRole));
+        String storedRole = resolveRole(korisnik.getId());
+        if (!desiredRole.equals(storedRole)) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to persist selected role"));
+        }
+
+        return ResponseEntity.ok(Map.of("role", desiredRole, "registered", true));
     }
 
     @PostMapping("/logout")

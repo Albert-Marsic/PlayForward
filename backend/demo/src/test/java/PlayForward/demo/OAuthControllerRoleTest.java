@@ -70,8 +70,8 @@ class OAuthControllerRoleTest {
 
         when(korisnikRepository.findByEmail(email)).thenReturn(Optional.of(korisnik));
         when(donatorRepository.existsById(22L)).thenReturn(false);
-        when(primateljRepository.existsById(22L)).thenReturn(false);
-        when(primateljRepository.save(any(Primatelj.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(primateljRepository.existsById(22L)).thenReturn(false, true);
+        when(primateljRepository.saveAndFlush(any(Primatelj.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         mockMvc.perform(post("/api/auth/role")
                 .with(oauth2Login().attributes(attrs -> {
@@ -85,7 +85,7 @@ class OAuthControllerRoleTest {
                 .andExpect(jsonPath("$.role").value("RECIPIENT"));
 
         var primateljCaptor = org.mockito.ArgumentCaptor.forClass(Primatelj.class);
-        verify(primateljRepository).save(primateljCaptor.capture());
+        verify(primateljRepository).saveAndFlush(primateljCaptor.capture());
         assertThat(primateljCaptor.getValue().getKorisnik()).isEqualTo(korisnik);
         verify(donatorRepository, never()).save(any(Donator.class));
     }
