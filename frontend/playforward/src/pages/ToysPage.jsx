@@ -1,26 +1,69 @@
-import { useState } from "react";
-import fakeData from "@/data/myFakeData";
+import { useState, useEffect, useMemo } from "react";
+//import fakeData from "@/data/myFakeData";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { getToys } from "@/api/toys";
 
 export default function ToysPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Sve");
+  const [sortBy, setSortBy] = useState("naziv"); // naziv, najnovije, stanje
+  const [toys, setToys] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // sve kategorije
-  const categories = ["Sve", ...new Set(fakeData.map(toy => toy.kategorija))];
+  useEffect(() => {
+    const fetchToys = async () => {
+      try {
+        setLoading(true);
+        const data = await getToys();
+        setToys(data || []);
+        setError(null);
+      } catch (err) {
+        setError("Greška pri učitavanju igračaka");
+        console.error(err);
+        setToys([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchToys();
+  }, []);
+
+  // sve kategorije - računanje se čini samo kad se toys promijene
+  const categories = useMemo(() => {
+    return ["Sve", ...new Set(toys.map(toy => toy.kategorija))];
+  }, [toys]);
 
   // filtrirane igračke
-  const filteredToys = fakeData.filter(toy => {
-    const matchesSearch = toy.naziv
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  const filteredToys = useMemo(() => {
+    let result = toys.filter(toy => {
+      const matchesSearch = toy.naziv
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
-    const matchesCategory =
-      selectedCategory === "Sve" || toy.kategorija === selectedCategory;
+      const matchesCategory =
+        selectedCategory === "Sve" || toy.kategorija === selectedCategory;
 
-    return matchesSearch && matchesCategory;
-  });
+      return matchesSearch && matchesCategory;
+    });
+
+    // sortiranje
+    if (sortBy === "naziv") {
+      result.sort((a, b) => a.naziv.localeCompare(b.naziv));
+    } else if (sortBy === "najnovije") {
+      result.sort((a, b) => new Date(b.datumKreiranjaIgracke) - new Date(a.datumKreiranjaIgracke));
+    } else if (sortBy === "stanje") {
+      const stanjeOrder = { Ispravan: 1, "Malo korišten": 2, "Korišten": 3 };
+      result.sort((a, b) => (stanjeOrder[a.stanje] || 99) - (stanjeOrder[b.stanje] || 99));
+    }
+
+    return result;
+  }, [toys, search, selectedCategory, sortBy]);
+
+  if (loading) return <p className="p-6">Učitavanje...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
     <div className="p-6">
@@ -49,6 +92,17 @@ export default function ToysPage() {
             </option>
           ))}
         </select>
+
+        {/* sortiranje */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="border rounded px-3 py-2 w-full md:w-1/4"
+        >
+          <option value="naziv">Sortiraj: Naziv (A-Z)</option>
+          <option value="najnovije">Sortiraj: Najnovije prvo</option>
+          <option value="stanje">Sortiraj: Stanje</option>
+        </select>
       </div>
 
       {/* popis igračaka */}
@@ -61,8 +115,8 @@ export default function ToysPage() {
 
         {filteredToys.map(toy => (
           <Link
-            to={`/igracke/${toy.idIgracka}`}
-            key={toy.idIgracka}
+            to={`/igracke/${toy.IDIgracka}`}
+            key={toy.IDIgracka}
             className="border rounded-lg p-4 shadow bg-white hover:shadow-lg transition cursor-pointer"
           >
             <img
@@ -83,9 +137,6 @@ export default function ToysPage() {
             </p>
             <p className="text-sm text-gray-600">
               Status: {toy.status}
-            </p>
-            <p className="text -sm text-gray-600">
-              Cijena: {toy.cijena.toFixed(2)} €
             </p>
           </Link>
         ))}

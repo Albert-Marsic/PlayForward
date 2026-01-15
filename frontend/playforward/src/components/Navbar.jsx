@@ -58,6 +58,21 @@ export default function Navbar() {
             {user ? (
               <>
                 <Button variant="ghost" asChild>
+                  <Link to="/profil">Profil</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/poruke">Poruke</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/kampanje">Kampanje</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/moje-donacije">Moje donacije</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/moji-zahtjevi">Moji zahtjevi</Link>
+                </Button>
+                <Button variant="ghost" asChild>
                   <Link to="/dashboard">Dashboard</Link>
                 </Button>
                 <Button variant="outline" onClick={logout} disabled={loading}>

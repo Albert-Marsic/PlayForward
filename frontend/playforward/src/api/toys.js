@@ -1,12 +1,13 @@
-import fakeData from "@/data/myFakeData";
+//import fakeData from "@/data/myFakeData";
 import axios from "axios";
+import { API_BASE_URL } from "../lib/config";
 
 export async function getToys() {
   try {
-    const res = await axios.get("http://localhost:5173/api/toys");
-    return res.data;
+    const res = await axios.get(`http://${API_BASE_URL}/api/igracke`);
+    return res.data || [];
   } catch (err) {
-    console.warn("API ne radi — vraćam mock podatke");
-    return fakeData;
+    console.error("Greška pri učitavanju igračaka:", err);
+    throw err;
   }
 }

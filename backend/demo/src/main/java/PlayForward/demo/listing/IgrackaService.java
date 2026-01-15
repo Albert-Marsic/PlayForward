@@ -235,4 +235,16 @@ public class IgrackaService {
 
         igrackaRepo.delete(igracka);
     }
+
+    // ---------------------------------------------------------
+    // DOHVATI POJEDINAČNU IGRAČKU PO ID-U
+    // ---------------------------------------------------------
+    public Igracka getById(Long id) {
+        if (id == null || id <= 0) {
+            throw new RuntimeException("ID igračke nije validan.");
+        }
+
+        return igrackaRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Igračka sa ID-om " + id + " ne postoji."));
+    }
 }

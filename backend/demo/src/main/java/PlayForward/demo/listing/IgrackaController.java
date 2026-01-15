@@ -38,6 +38,12 @@ public class IgrackaController {
         return ResponseEntity.ok(service.filter(kategorija, stanje));
     }
 
+    // 3.5) Dohvati pojedinačnu igračku
+    @GetMapping("/{id}")
+    public ResponseEntity<Igracka> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getById(id));
+    }
+
     // BONUS: primatelj "zatraži" -> rezerviraj
     @PostMapping("/{id}/rezerviraj")
     public ResponseEntity<?> rezerviraj(@PathVariable Long id) {

@@ -40,14 +40,15 @@ export function CartProvider({ children }) {
 
   const addToCart = (toy) => {
     setCartItems(prev => {
-      const exists = prev.find(item => item.idIgracka === toy.idIgracka);
+      const toyId = toy.id || toy.idIgracka;
+      const exists = prev.find(item => (item.id || item.idIgracka) === toyId);
       if (exists) return prev; // nema duplikata
       return [...prev, toy];
     });
   };
 
   const removeFromCart = (id) => {
-    setCartItems(prev => prev.filter(item => item.idIgracka !== id));
+    setCartItems(prev => prev.filter(item => (item.id || item.idIgracka) !== id));
   };
 
   const clearCart = () => {

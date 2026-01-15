@@ -1,15 +1,39 @@
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
-import fakeData from "@/data/myFakeData";
+import { useEffect, useState } from "react";
+//import fakeData from "@/data/myFakeData";
+import { getToyDetails } from "@/api/toyDetails";
 
 export default function ToyDetails() {
-  const { id } = useParams();
+  const { toyId } = useParams();
   const { addToCart } = useCart();
+  const [toy, setToy] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const toy = fakeData.find(t => String(t.idIgracka) === id);
+  useEffect(() => {
+    const fetchToy = async () => {
+      try {
+        setLoading(true);
+        const data = await getToyDetails(toyId);
+        setToy(data);
+        setError(null);
+      } catch (err) {
+        setError("Greška pri učitavanju igračke");
+        console.error(err);
+        setToy(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!toy) return <p>Nema igračke</p>;
+    fetchToy();
+  }, [toyId]);
+
+  if (loading) return <p className="p-6">Učitavanje...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
+  if (!toy) return <p className="p-6">Nema igračke</p>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

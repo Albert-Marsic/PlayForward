@@ -8,53 +8,90 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
-import axios from "axios"
+import { createToy, fileToDataUrl } from "@/api/listing"
 
 export function AddProductionForm({ className, ...props }) {
     
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [recommendedAge, setRecommendedAge] = useState("");
-    const [category, setCategory] = useState("");
-    const [condition, setCondition] = useState("");
-    const [imageFile, setImageFile] = useState(null); // upload slike
+    const [naziv, setNaziv] = useState("");
+    const [kategorija, setKategorija] = useState("");
+    const [stanje, setStanje] = useState("");
+    const [fotografija, setFotografija] = useState("");
+    const [uvjeti, setUvjeti] = useState("");
+    const [imageFile, setImageFile] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false);
+
+    const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            try {
+                const dataUrl = await fileToDataUrl(file);
+                setFotografija(dataUrl);
+                setImageFile(file);
+            } catch (err) {
+                setError("Greška pri učitavanju slike");
+            }
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(null);
+        setSuccess(false);
 
-         // Ako backend još ne radi → samo pokaži podatke u konzoli
-        const toyData = {
-            name,
-            description,
-            recommendedAge,
-            category,
-            condition,
-            imageFile
-        };
-
-        console.log("Sending toy:", toyData);
+        if (!naziv || !kategorija || !stanje || !fotografija) {
+            setError("Naziv, kategorija, stanje i fotografija su obavezni");
+            return;
+        }
 
         try {
-            //za backend upload
-            const formData = new FormData();
-            formData.append("name", name);
-            formData.append("description", description);
-            formData.append("recommendedAge", recommendedAge);
-            formData.append("category", category);
-            formData.append("condition", condition);
-            formData.append("image", imageFile);
+            setLoading(true);
 
-            const res = await axios.post("/api/toys", formData, {
-                headers: { "Content-Type": "multipart/form-data"}
-            });
+            const toyData = {
+                naziv,
+                kategorija,
+                stanje,
+                fotografija,
+                uvjeti: uvjeti || null
+            };
 
-            console.log("Success:", res.data);
-            alert("Igračka dodana!");
-        } catch (error) {
-            console.error("API error:", error);
-            alert("API još ne radi - koristi se mock data.")
+            await createToy(toyData);
+
+            setSuccess(true);
+            alert("Igračka je uspješno dodata! 🎉");
+            
+            // Resetiraj formu
+            setNaziv("");
+            setKategorija("");
+            setStanje("");
+            setFotografija("");
+            setUvjeti("");
+            setImageFile(null);
+        } catch (err) {
+            setError(err.message || "Greška pri dodavanju igračke");
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
+
+    // Dostupne kategorije
+    const kategorije = [
+        "Plišanci",
+        "Puzzle",
+        "Društvene igre",
+        "LEGO setovi",
+        "Vozila",
+        "Lutke",
+        "Knjige",
+        "Glazbene igračke",
+        "Sportska oprema",
+        "Drugo"
+    ];
+
+    // Dostupna stanja
+    const stanja = ["Novo", "Korišteno"];
 
     return (
         <form 
@@ -63,75 +100,97 @@ export function AddProductionForm({ className, ...props }) {
             {...props}>
             <FieldGroup>
 
-                {/* Naziv proizvoda */}
-                <Field>
-                    <FieldLabel>Naziv igračke</FieldLabel>
-                    <Input 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Npr. LEGO set"
-                    required
-                    />
-                </Field>
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        {error}
+                    </div>
+                )}
 
-                {/* Opis */}
-                <Field>
-                    <FieldLabel>Opis</FieldLabel>
-                    <FieldDescription>
-                    Ukratko opiši stanje i izgled igračke.
-                    </FieldDescription>
-                    <Input 
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Opis igračke..."
-                    />
-                </Field>
+                {success && (
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                        Igračka je uspješno dodana!
+                    </div>
+                )}
 
-                {/* Dob */}
+                {/* Naziv igračke */}
                 <Field>
-                    <FieldLabel>Preporučena dob</FieldLabel>
+                    <FieldLabel>Naziv igračke *</FieldLabel>
                     <Input 
-                        type="number"
-                        value={recommendedAge}
-                        onChange={(e) => setRecommendedAge(e.target.value)}
-                        placeholder="Npr. 6"
+                        value={naziv}
+                        onChange={(e) => setNaziv(e.target.value)}
+                        placeholder="Npr. LEGO set"
+                        required
                     />
                 </Field>
 
                 {/* Kategorija */}
                 <Field>
-                    <FieldLabel>Kategorija</FieldLabel>
-                    <Input 
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        placeholder="Npr. Figura, Vozilo..."
-                    />
+                    <FieldLabel>Kategorija *</FieldLabel>
+                    <select
+                        value={kategorija}
+                        onChange={(e) => setKategorija(e.target.value)}
+                        required
+                        className="border rounded px-3 py-2 w-full"
+                    >
+                        <option value="">Odaberi kategoriju</option>
+                        {kategorije.map(kat => (
+                            <option key={kat} value={kat}>{kat}</option>
+                        ))}
+                    </select>
                 </Field>
 
                 {/* Stanje */}
                 <Field>
-                    <FieldLabel>Stanje</FieldLabel>
+                    <FieldLabel>Stanje *</FieldLabel>
+                    <select
+                        value={stanje}
+                        onChange={(e) => setStanje(e.target.value)}
+                        required
+                        className="border rounded px-3 py-2 w-full"
+                    >
+                        <option value="">Odaberi stanje</option>
+                        {stanja.map(stan => (
+                            <option key={stan} value={stan}>{stan}</option>
+                        ))}
+                    </select>
+                </Field>
+
+                {/* Uvjeti */}
+                <Field>
+                    <FieldLabel>Uvjeti preuzimanja (opcionalno)</FieldLabel>
+                    <FieldDescription>
+                        Npr. "Preuzimanje isključivo osobno" ili "Dostava o vlastitom trošku"
+                    </FieldDescription>
                     <Input 
-                        value={condition}
-                        onChange={(e) => setCondition(e.target.value)}
-                        placeholder="Npr. Novo, Rabljeno..."
+                        value={uvjeti}
+                        onChange={(e) => setUvjeti(e.target.value)}
+                        placeholder="Upiši uvjete..."
                     />
                 </Field>
 
                 {/* Slika */}
                 <Field>
-                    <FieldLabel>Slika igračke</FieldLabel>
+                    <FieldLabel>Fotografija igračke *</FieldLabel>
+                    <FieldDescription>
+                        Odaberi najmanje jednu stvarnu fotografiju
+                    </FieldDescription>
                     <Input 
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setImageFile(e.target.files[0])}
+                        onChange={handleImageChange}
+                        required
                     />
+                    {fotografija && (
+                        <div className="mt-2">
+                            <img src={fotografija} alt="Preview" className="w-32 h-32 object-cover rounded" />
+                        </div>
+                    )}
                 </Field>
 
             </FieldGroup>
 
-            <Button type="submit" className="w-full">
-                Dodaj igračku
+            <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Dodavanje..." : "Dodaj igračku"}
             </Button>
         </form>
   );
