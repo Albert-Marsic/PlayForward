@@ -9,7 +9,6 @@ import ToysPage from "./pages/ToysPage"
 import ToyDetails from "./pages/ToyDetails"
 import Kosarica from "./pages/Cart"
 import Kupovina from "./pages/CheckoutPage"
-import Uloga from "./pages/RolePage"
 import './App.css'
 
 function App() {
@@ -27,7 +26,6 @@ function App() {
           <Route path="/igracke/:id" element={<ToyDetails />}/>
           <Route path="/kosarica" element={<Kosarica />}/>
           <Route path="/kupovina" element={<Kupovina />}/>
-          <Route path="/uloga" element={<Uloga />}/>
           <Route path="*" element={<Page_404 />}/>
         </Routes>
       </main>

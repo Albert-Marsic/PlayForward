@@ -28,6 +28,7 @@ import java.util.Map;
 public class OAuthController {
 
     private final String oauthLoginPath = "/oauth2/authorization/google";
+    private static final int DISPLAY_NAME_MAX = 20;
     private final KorisnikRepository korisnikRepository;
     private final DonatorRepository donatorRepository;
     private final PrimateljRepository primateljRepository;
@@ -113,7 +114,7 @@ public class OAuthController {
         }
 
         String name = principal.getAttribute("name");
-        final String displayName = (name == null || name.isBlank()) ? email : name;
+        final String displayName = normalizeDisplayName(name, email);
 
         Korisnik korisnik = korisnikRepository.findByEmail(email).orElseGet(() -> {
             Korisnik newUser = new Korisnik();
@@ -135,15 +136,21 @@ public class OAuthController {
             if ("DONATOR".equals(desiredRole)) {
                 Donator donator = new Donator();
                 donator.setKorisnik(korisnik);
-                donatorRepository.save(donator);
+                donatorRepository.saveAndFlush(donator);
             } else {
                 Primatelj primatelj = new Primatelj();
                 primatelj.setKorisnik(korisnik);
-                primateljRepository.save(primatelj);
+                primateljRepository.saveAndFlush(primatelj);
             }
         }
 
-        return ResponseEntity.ok(Map.of("role", desiredRole));
+        String storedRole = resolveRole(korisnik.getId());
+        if (!desiredRole.equals(storedRole)) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to persist selected role"));
+        }
+
+        return ResponseEntity.ok(Map.of("role", desiredRole, "registered", true));
     }
 
     @PostMapping("/logout")
@@ -189,6 +196,18 @@ public class OAuthController {
             return "RECIPIENT";
         }
         return null;
+    }
+
+    private String normalizeDisplayName(String name, String email) {
+        String candidate = (name == null || name.isBlank()) ? email : name;
+        String trimmed = candidate == null ? "" : candidate.trim();
+        if (trimmed.isEmpty()) {
+            trimmed = "Korisnik";
+        }
+        if (trimmed.length() > DISPLAY_NAME_MAX) {
+            return trimmed.substring(0, DISPLAY_NAME_MAX);
+        }
+        return trimmed;
     }
 
     private static class RoleRequest {
