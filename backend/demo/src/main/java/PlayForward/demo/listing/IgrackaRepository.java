@@ -8,6 +8,7 @@ import java.util.List;
 @Repository
 public interface IgrackaRepository extends JpaRepository<Igracka, Long> {
 
+    // Primatelj: pregled dostupnih igračaka
     List<Igracka> findByStatus(StatusIgracke status);
 
     List<Igracka> findByStatusAndKategorijaIgnoreCase(StatusIgracke status, String kategorija);
@@ -15,10 +16,9 @@ public interface IgrackaRepository extends JpaRepository<Igracka, Long> {
     List<Igracka> findByStatusAndStanje(StatusIgracke status, StanjeIgracke stanje);
 
     List<Igracka> findByStatusAndKategorijaIgnoreCaseAndStanje(
-            StatusIgracke status,
-            String kategorija,
-            StanjeIgracke stanje
+            StatusIgracke status, String kategorija, StanjeIgracke stanje
     );
 
-    List<Igracka> findByDonator_Id(Long donatorId);
+    // Donator: “obavijesti” = sve njegove igračke koje imaju ZAHTJEV
+    List<Igracka> findByDonator_IdAndStatus(Long donatorId, StatusIgracke status);
 }

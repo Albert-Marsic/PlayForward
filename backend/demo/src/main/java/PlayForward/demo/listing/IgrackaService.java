@@ -5,21 +5,17 @@ import PlayForward.demo.security.SecurityUtil;
 import PlayForward.demo.user.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import PlayForward.demo.listing.dto.CreateIgrackaRequest;
-import PlayForward.demo.listing.dto.UpdateUvjetiRequest;
 
 import java.util.List;
 
 @Service
 public class IgrackaService {
 
-    // Repozitoriji = objekti koji čitaju/pišu podatke u bazu
     private final IgrackaRepository igrackaRepo;
     private final KorisnikRepository korisnikRepo;
     private final DonatorRepository donatorRepo;
     private final PrimateljRepository primateljRepo;
 
-    // Spring će sam ubaciti (injectati) ove repozitorije
     public IgrackaService(IgrackaRepository igrackaRepo,
                           KorisnikRepository korisnikRepo,
                           DonatorRepository donatorRepo,
@@ -30,211 +26,196 @@ public class IgrackaService {
         this.primateljRepo = primateljRepo;
     }
 
-    // ---------------------------------------------------------
-    // POMOĆNE METODE
-    // ---------------------------------------------------------
+    // -------------------------
+    // POMOĆNE METODE (tko je prijavljen)
+    // -------------------------
 
-    // Dohvaća ID trenutno ulogiranog korisnika iz JWT tokena
+    // Iz JWT-a uzmemo email, pa iz baze nađemo našeg korisnika (korisnik tablica).
     private Long currentKorisnikId() {
-        // Iz JWT-a uzmemo email
         String email = SecurityUtil.currentEmailOrThrow();
 
-        // Po emailu pronađemo korisnika u bazi i vratimo njegov ID
-        return korisnikRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Korisnik ne postoji u bazi."))
-                .getId();
+        Korisnik k = korisnikRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Korisnik ne postoji u bazi."));
+
+        return k.getId();
     }
 
-    // Provjerava da je korisnik DONATOR i vraća njegov zapis
+    // Ako korisnik nije donator (nema reda u tablici DONATOR), bacimo grešku.
     private Donator currentDonatorOrThrow() {
         Long id = currentKorisnikId();
-
         return donatorRepo.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Nemate DONATOR ulogu (niste upisani u tablicu donator).")
-                );
+                .orElseThrow(() -> new RuntimeException("Nemate DONATOR ulogu (ne postoji zapis u tablici donator)."));
     }
 
-    // Provjerava da je korisnik PRIMATELJ i vraća njegov zapis
+    // Ako korisnik nije primatelj (nema reda u tablici PRIMATELJ), bacimo grešku.
     private Primatelj currentPrimateljOrThrow() {
         Long id = currentKorisnikId();
-
         return primateljRepo.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Nemate PRIMATELJ ulogu (niste upisani u tablicu primatelj).")
-                );
+                .orElseThrow(() -> new RuntimeException("Nemate PRIMATELJ ulogu (ne postoji zapis u tablici primatelj)."));
     }
 
-    // ---------------------------------------------------------
-    // 1) DONATOR OBJAVLJUJE IGRAČKU
-    // ---------------------------------------------------------
+    // -------------------------
+    // 1) DONATOR: objavi igračku
+    // -------------------------
     @Transactional
     public Igracka create(CreateIgrackaRequest req) {
 
-        // Provjere da korisnik nije poslao prazne podatke
-        if (req == null) throw new RuntimeException("Podaci nedostaju.");
+        // Jednostavne provjere (da ne upišemo prazne podatke)
+        if (req == null) throw new RuntimeException("Tijelo zahtjeva nedostaje.");
         if (req.naziv == null || req.naziv.isBlank()) throw new RuntimeException("Naziv je obavezan.");
         if (req.kategorija == null || req.kategorija.isBlank()) throw new RuntimeException("Kategorija je obavezna.");
         if (req.stanje == null) throw new RuntimeException("Stanje je obavezno.");
-        if (req.fotografija == null || req.fotografija.isBlank())
-            throw new RuntimeException("Fotografija je obavezna.");
+        if (req.fotografija == null || req.fotografija.isBlank()) throw new RuntimeException("Fotografija je obavezna.");
 
-        // Provjerimo da je korisnik donator
+        // Ovdje pazimo da stvarno imamo donatora
         Donator donator = currentDonatorOrThrow();
 
-        // Napravimo novi objekt Igracka
-        Igracka igracka = new Igracka();
-        igracka.setNaziv(req.naziv.trim());
-        igracka.setKategorija(req.kategorija.trim());
-        igracka.setStanje(req.stanje);
-        igracka.setFotografija(req.fotografija.trim());
-        igracka.setUvjeti(req.uvjeti == null ? null : req.uvjeti.trim());
+        // Napravimo novi objekt i spremimo u bazu
+        Igracka i = new Igracka();
+        i.setNaziv(req.naziv.trim());
+        i.setKategorija(req.kategorija.trim());
+        i.setStanje(req.stanje);
+        i.setFotografija(req.fotografija.trim());
+        i.setUvjeti(req.uvjeti == null ? null : req.uvjeti.trim());
 
-        // Nova igračka je uvijek dostupna
-        igracka.setStatus(StatusIgracke.DOSTUPNO);
+        // Na početku je igračka dostupna i nema primatelja
+        i.setStatus(StatusIgracke.dostupno);
+        i.setDonator(donator);
+        i.setPrimatelj(null);
 
-        // Postavimo tko je donator
-        igracka.setDonator(donator);
-
-        // Još nema primatelja
-        igracka.setPrimatelj(null);
-
-        // Spremimo u bazu
-        return igrackaRepo.save(igracka);
+        return igrackaRepo.save(i);
     }
 
-    // ---------------------------------------------------------
-    // 2) DONATOR MIJENJA UVJETE
-    // ---------------------------------------------------------
+    // -------------------------
+    // 2) DONATOR: promijeni uvjete (samo vlasnik i samo ako nije rezervirano)
+    // -------------------------
     @Transactional
     public Igracka updateUvjeti(Long igrackaId, String uvjeti) {
 
-        // Pronađemo igračku u bazi
-        Igracka igracka = igrackaRepo.findById(igrackaId)
+        Igracka i = igrackaRepo.findById(igrackaId)
                 .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
 
-        // Provjera: samo onaj donator koji ju je objavio smije je mijenjati
+        // Samo donator koji je objavio igračku smije mijenjati uvjete
         Long currentId = currentKorisnikId();
-        if (!igracka.getDonator().getId().equals(currentId)) {
+        if (!i.getDonator().getId().equals(currentId)) {
             throw new RuntimeException("Nemate pravo mijenjati ovu igračku.");
         }
 
-        // Ako je rezervirana, ne smije se više mijenjati
-        if (igracka.getStatus() == StatusIgracke.REZERVIRANO) {
-            throw new RuntimeException("Ne možete mijenjati uvjete jer je igračka već rezervirana.");
+        // Ako je već prihvaćena (rezervirana), nema promjena uvjeta
+        if (i.getStatus() == StatusIgracke.rezervirano
+        ) {
+            throw new RuntimeException("Ne možete mijenjati uvjete jer je igračka rezervirana.");
         }
 
-        // Postavimo nove uvjete
-        igracka.setUvjeti(uvjeti == null ? null : uvjeti.trim());
-
-        return igrackaRepo.save(igracka);
+        i.setUvjeti(uvjeti == null ? null : uvjeti.trim());
+        return igrackaRepo.save(i);
     }
 
-    // ---------------------------------------------------------
-    // 3) PRIMATELJ FILTRIRA DOSTUPNE IGRAČKE
-    // ---------------------------------------------------------
+    // -------------------------
+    // 3) PRIMATELJ: filtriraj dostupne igračke
+    // -------------------------
     @Transactional(readOnly = true)
     public List<Igracka> filter(String kategorija, StanjeIgracke stanje) {
 
-        // Ako ništa nije zadano – vrati sve dostupne
+        // Uvijek vraćamo samo one koje su DOSTUPNE
         if ((kategorija == null || kategorija.isBlank()) && stanje == null) {
-            return igrackaRepo.findByStatus(StatusIgracke.DOSTUPNO);
+            return igrackaRepo.findByStatus(StatusIgracke.dostupno);
         }
 
-        // Samo kategorija
         if (kategorija != null && !kategorija.isBlank() && stanje == null) {
             return igrackaRepo.findByStatusAndKategorijaIgnoreCase(
-                    StatusIgracke.DOSTUPNO,
-                    kategorija.trim()
+                    StatusIgracke.dostupno, kategorija.trim()
             );
         }
 
-        // Samo stanje
         if ((kategorija == null || kategorija.isBlank()) && stanje != null) {
-            return igrackaRepo.findByStatusAndStanje(
-                    StatusIgracke.DOSTUPNO,
-                    stanje
-            );
+            return igrackaRepo.findByStatusAndStanje(StatusIgracke.dostupno, stanje);
         }
 
-        // Kategorija + stanje
         return igrackaRepo.findByStatusAndKategorijaIgnoreCaseAndStanje(
-                StatusIgracke.DOSTUPNO,
+                StatusIgracke.dostupno,
                 kategorija.trim(),
                 stanje
         );
     }
 
-    // ---------------------------------------------------------
-    // BONUS: PRIMATELJ "ZATRAŽI" = REZERVIRA IGRAČKU
-    // ---------------------------------------------------------
+    // -------------------------
+    // 4) PRIMATELJ: pošalji zahtjev za donaciju
+    // -------------------------
     @Transactional
-    public Igracka rezerviraj(Long igrackaId) {
+    public Igracka posaljiZahtjev(Long igrackaId) {
 
-        // Provjera da je korisnik primatelj
+        // Mora biti primatelj
         Primatelj primatelj = currentPrimateljOrThrow();
 
-        Igracka igracka = igrackaRepo.findById(igrackaId)
+        Igracka i = igrackaRepo.findById(igrackaId)
                 .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
 
-        if (igracka.getStatus() != StatusIgracke.DOSTUPNO) {
-            throw new RuntimeException("Igračka više nije dostupna.");
+        // Zahtjev se može poslati samo ako je igračka dostupna
+        if (i.getStatus() != StatusIgracke.dostupno) {
+            throw new RuntimeException("Igračka nije dostupna za slanje zahtjeva.");
         }
 
-        // Postaje rezervirana i vežemo primatelja
-        igracka.setStatus(StatusIgracke.REZERVIRANO);
-        igracka.setPrimatelj(primatelj);
+        // Zapišemo tko je poslao zahtjev i promijenimo status u ZAHTJEV
+        i.setPrimatelj(primatelj);
+        i.setStatus(StatusIgracke.zahtjev);
 
-        return igrackaRepo.save(igracka);
+        return igrackaRepo.save(i);
     }
 
-    // ---------------------------------------------------------
-    // BONUS: PRIMATELJ ODUSTANE -> OPET DOSTUPNO
-    // ---------------------------------------------------------
+    // -------------------------
+    // 5) DONATOR: “obavijesti” = vidi sve moje zahtjeve (status ZAHTJEV)
+    // -------------------------
+    @Transactional(readOnly = true)
+    public List<Igracka> mojiZahtjevi() {
+        Donator donator = currentDonatorOrThrow();
+        return igrackaRepo.findByDonator_IdAndStatus(donator.getId(), StatusIgracke.zahtjev);
+    }
+
+    // -------------------------
+    // 6) DONATOR: prihvati zahtjev => REZERVIRANO
+    // -------------------------
     @Transactional
-    public Igracka odustani(Long igrackaId) {
+    public Igracka prihvatiZahtjev(Long igrackaId) {
 
         Long currentId = currentKorisnikId();
 
-        Igracka igracka = igrackaRepo.findById(igrackaId)
+        Igracka i = igrackaRepo.findById(igrackaId)
                 .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
 
-        // Mora biti rezervirana
-        if (igracka.getStatus() != StatusIgracke.REZERVIRANO || igracka.getPrimatelj() == null) {
-            throw new RuntimeException("Igračka nije rezervirana.");
+        // Samo vlasnik (donator) može prihvatiti
+        if (!i.getDonator().getId().equals(currentId)) {
+            throw new RuntimeException("Nemate pravo prihvatiti zahtjev za ovu igračku.");
         }
 
-        // Samo onaj primatelj koji ju je rezervirao smije odustati
-        if (!igracka.getPrimatelj().getId().equals(currentId)) {
-            throw new RuntimeException("Samo primatelj koji je rezervirao smije odustati.");
+        // Mora postojati zahtjev
+        if (i.getStatus() != StatusIgracke.zahtjev || i.getPrimatelj() == null) {
+            throw new RuntimeException("Za ovu igračku nema aktivnog zahtjeva.");
         }
 
-        // Vraćamo igračku u stanje dostupno
-        igracka.setStatus(StatusIgracke.DOSTUPNO);
-        igracka.setPrimatelj(null);
-
-        return igrackaRepo.save(igracka);
+        i.setStatus(StatusIgracke.rezervirano);
+        return igrackaRepo.save(i);
     }
 
-    // ---------------------------------------------------------
-    // BONUS: DONATOR POVUČE OGLAS (DOK NIJE REZERVIRAN)
-    // ---------------------------------------------------------
+    // (preporučeno) Donator odbije zahtjev => opet DOSTUPNO
     @Transactional
-    public void povuci(Long igrackaId) {
-
-        Igracka igracka = igrackaRepo.findById(igrackaId)
-                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+    public Igracka odbijZahtjev(Long igrackaId) {
 
         Long currentId = currentKorisnikId();
 
-        if (!igracka.getDonator().getId().equals(currentId)) {
-            throw new RuntimeException("Nemate pravo povući ovu igračku.");
+        Igracka i = igrackaRepo.findById(igrackaId)
+                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+
+        if (!i.getDonator().getId().equals(currentId)) {
+            throw new RuntimeException("Nemate pravo odbiti zahtjev za ovu igračku.");
         }
 
-        if (igracka.getStatus() == StatusIgracke.REZERVIRANO) {
-            throw new RuntimeException("Ne možete povući oglas jer je igračka već rezervirana.");
+        if (i.getStatus() != StatusIgracke.zahtjev) {
+            throw new RuntimeException("Igračka nema zahtjev koji se može odbiti.");
         }
 
-        igrackaRepo.delete(igracka);
+        i.setStatus(StatusIgracke.dostupno);
+        i.setPrimatelj(null);
+        return igrackaRepo.save(i);
     }
 }

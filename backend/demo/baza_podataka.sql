@@ -92,3 +92,10 @@ CREATE TABLE IF NOT EXISTS RECENZIJA (
 INSERT INTO KORISNIK (imeKorisnik, email)
 VALUES ('Albert', 'abi@mail.com')
 ON CONFLICT (email) DO NOTHING;
+ALTER TYPE status_igracke ADD VALUE IF NOT EXISTS 'zahtjev';
+DO $$
+BEGIN
+    ALTER TYPE status_igracke ADD VALUE IF NOT EXISTS 'zahtjev';
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;

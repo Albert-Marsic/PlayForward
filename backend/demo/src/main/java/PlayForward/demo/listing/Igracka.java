@@ -28,7 +28,7 @@ public class Igracka {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 12, nullable = false)
-    private StatusIgracke status = StatusIgracke.DOSTUPNO;
+    private StatusIgracke status = StatusIgracke.dostupno;
 
     @Column(name = "uvjeti", length = 100)
     private String uvjeti;

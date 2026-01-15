@@ -1,6 +1,8 @@
 package PlayForward.demo.listing;
 
 public enum StatusIgracke {
-    DOSTUPNO,
-    REZERVIRANO
+    dostupno,
+    zahtjev,
+    rezervirano
 }
+

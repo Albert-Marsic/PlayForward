@@ -1,3 +1,5 @@
+//pod pretpostavkom da se salje JSON
+
 package PlayForward.demo.listing;
 
 import PlayForward.demo.listing.dto.CreateIgrackaRequest;
@@ -17,19 +19,20 @@ public class IgrackaController {
         this.service = service;
     }
 
-    // 1) Donator objavi igračku
+    // Donator: objavi igračku
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody CreateIgrackaRequest req) {
+    public ResponseEntity<Igracka> create(@RequestBody CreateIgrackaRequest req) {
         return ResponseEntity.ok(service.create(req));
     }
 
-    // 2) Donator postavlja uvjete
+    // Donator: promijeni uvjete (frontend šalje JSON: { "uvjeti": "..." })
     @PutMapping("/{id}/uvjeti")
-    public ResponseEntity<?> updateUvjeti(@PathVariable Long id, @RequestBody UpdateUvjetiRequest req) {
-        return ResponseEntity.ok(service.updateUvjeti(id, req == null ? null : req.uvjeti));
+    public ResponseEntity<Igracka> updateUvjeti(@PathVariable Long id,
+                                                @RequestBody UpdateUvjetiRequest req) {
+        return ResponseEntity.ok(service.updateUvjeti(id, req.uvjeti));
     }
 
-    // 3) Primatelj filtrira dostupne
+    // Primatelj: filtriranje (samo dostupne)
     @GetMapping
     public ResponseEntity<List<Igracka>> filter(
             @RequestParam(required = false) String kategorija,
@@ -38,22 +41,27 @@ public class IgrackaController {
         return ResponseEntity.ok(service.filter(kategorija, stanje));
     }
 
-    // BONUS: primatelj "zatraži" -> rezerviraj
-    @PostMapping("/{id}/rezerviraj")
-    public ResponseEntity<?> rezerviraj(@PathVariable Long id) {
-        return ResponseEntity.ok(service.rezerviraj(id));
+    // Primatelj: pošalji zahtjev
+    @PostMapping("/{id}/zahtjev")
+    public ResponseEntity<Igracka> posaljiZahtjev(@PathVariable Long id) {
+        return ResponseEntity.ok(service.posaljiZahtjev(id));
     }
 
-    // BONUS: primatelj odustane
-    @PostMapping("/{id}/odustani")
-    public ResponseEntity<?> odustani(@PathVariable Long id) {
-        return ResponseEntity.ok(service.odustani(id));
+    // Donator: lista zahtjeva (obavijesti)
+    @GetMapping("/moji/zahtjevi")
+    public ResponseEntity<List<Igracka>> mojiZahtjevi() {
+        return ResponseEntity.ok(service.mojiZahtjevi());
     }
 
-    // BONUS: donator povuče oglas dok je dostupno
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> povuci(@PathVariable Long id) {
-        service.povuci(id);
-        return ResponseEntity.ok(java.util.Map.of("deleted", true));
+    // Donator: prihvati zahtjev
+    @PostMapping("/{id}/zahtjev/prihvati")
+    public ResponseEntity<Igracka> prihvati(@PathVariable Long id) {
+        return ResponseEntity.ok(service.prihvatiZahtjev(id));
+    }
+
+    // Donator: odbij zahtjev
+    @PostMapping("/{id}/zahtjev/odbij")
+    public ResponseEntity<Igracka> odbij(@PathVariable Long id) {
+        return ResponseEntity.ok(service.odbijZahtjev(id));
     }
 }
