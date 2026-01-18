@@ -16,7 +16,7 @@ public class Recenzija {
     @Column(name = "ocjena", nullable = false)
     private Integer ocjena;
 
-    @Column(name = "tekst", length = 100)
+    @Column(name = "tekst", length = 100, nullable = false)
     private String tekst;
 
     @ManyToOne(optional = false)
