@@ -25,4 +25,6 @@ public interface IgrackaRepository extends JpaRepository<Igracka, Long> {
     List<Igracka> findByPrimatelj_Id(Long primateljId);
 
     void deleteByDonator_Id(Long donatorId);
+
+    long countByStatus(StatusIgracke status);
 }

@@ -1,12 +1,36 @@
 import { api } from "../lib/api";
 
+async function parseResponse(response) {
+  const text = await response.text();
+  let payload = null;
+
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = text;
+    }
+  }
+
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === "object"
+        ? payload.message || payload.error
+        : payload;
+    throw new Error(message || `HTTP ${response.status}`);
+  }
+
+  return payload;
+}
+
 /**
  * Dohvati sve korisnike (samo za admina)
  */
 export async function getAllUsers(limit = 50, offset = 0) {
   try {
     const response = await api(`/admin/korisnici?limit=${limit}&offset=${offset}`);
-    return response.data || [];
+    const data = await parseResponse(response);
+    return data || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju korisnika:", err);
     throw err;
@@ -19,7 +43,8 @@ export async function getAllUsers(limit = 50, offset = 0) {
 export async function getAllDonations(limit = 50, offset = 0) {
   try {
     const response = await api(`/admin/donacije?limit=${limit}&offset=${offset}`);
-    return response.data || [];
+    const data = await parseResponse(response);
+    return data || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju donacija:", err);
     throw err;
@@ -32,7 +57,8 @@ export async function getAllDonations(limit = 50, offset = 0) {
 export async function getAllCampaigns(limit = 50, offset = 0) {
   try {
     const response = await api(`/admin/kampanje?limit=${limit}&offset=${offset}`);
-    return response.data || [];
+    const data = await parseResponse(response);
+    return data || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju kampanja:", err);
     throw err;
@@ -45,7 +71,8 @@ export async function getAllCampaigns(limit = 50, offset = 0) {
 export async function getPlatformStats() {
   try {
     const response = await api("/admin/statistika");
-    return response.data || {};
+    const data = await parseResponse(response);
+    return data || {};
   } catch (err) {
     console.error("Greška pri dohvaćanju statistike:", err);
     throw err;
@@ -63,7 +90,7 @@ export async function deleteUser(userId) {
       method: "DELETE",
     });
 
-    return response.data;
+    return await parseResponse(response);
   } catch (err) {
     console.error("Greška pri brisanju korisnika:", err);
     throw err;
@@ -81,7 +108,7 @@ export async function deleteDonation(donationId) {
       method: "DELETE",
     });
 
-    return response.data;
+    return await parseResponse(response);
   } catch (err) {
     console.error("Greška pri brisanju donacije:", err);
     throw err;
@@ -99,7 +126,7 @@ export async function deleteCampaign(campaignId) {
       method: "DELETE",
     });
 
-    return response.data;
+    return await parseResponse(response);
   } catch (err) {
     console.error("Greška pri brisanju kampanje:", err);
     throw err;

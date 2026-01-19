@@ -20,4 +20,6 @@ public interface ZahtjevRepository extends JpaRepository<Zahtjev, Long> {
     void deleteByPrimatelj_Id(Long primateljId);
 
     void deleteByDonator_Id(Long donatorId);
+
+    List<Zahtjev> findByIgracka_Id(Long igrackaId);
 }

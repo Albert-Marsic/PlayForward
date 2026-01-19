@@ -3,6 +3,7 @@ package PlayForward.demo.review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -14,4 +15,6 @@ public interface RecenzijaRepository extends JpaRepository<Recenzija, Long> {
     void deleteByDonator_Id(Long donatorId);
 
     void deleteByPrimatelj_Id(Long primateljId);
+
+    void deleteByZahtjev_IdIn(Collection<Long> zahtjevIds);
 }

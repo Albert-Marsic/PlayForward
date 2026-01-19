@@ -26,6 +26,13 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("stats");
   const [deleting, setDeleting] = useState(null);
 
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("hr-HR");
+  };
+
   // Provera da li je korisnik admin
   const isAdmin = user?.role === "ADMIN" || user?.uloga === "ADMIN";
 
@@ -236,7 +243,7 @@ export default function AdminDashboard() {
                 users.map((u) => (
                   <tr key={u.id} className="border-b hover:bg-gray-50">
                     <td className="p-4">{u.email}</td>
-                    <td className="p-4">{u.ime || "-"}</td>
+                    <td className="p-4">{u.ime || u.imeKorisnik || "-"}</td>
                     <td className="p-4">
                       <span
                         className={`px-3 py-1 rounded text-xs font-semibold ${
@@ -251,7 +258,7 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {new Date(u.datumRegistracije).toLocaleDateString("hr-HR")}
+                      {formatDate(u.datumRegistracije)}
                     </td>
                     <td className="p-4">
                       <button
@@ -291,37 +298,44 @@ export default function AdminDashboard() {
                   </td>
                 </tr>
               ) : (
-                donations.map((d) => (
-                  <tr key={d.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4">{d.igracka?.naziv || "Nepoznata"}</td>
-                    <td className="p-4 text-sm">{d.donator?.email || "-"}</td>
-                    <td className="p-4">
-                      <span
-                        className={`px-3 py-1 rounded text-xs font-semibold ${
-                          d.status === "dostupno"
-                            ? "bg-green-100 text-green-800"
-                            : d.status === "rezervirano"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {d.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {new Date(d.datumKreiranja).toLocaleDateString("hr-HR")}
-                    </td>
-                    <td className="p-4">
-                      <button
-                        onClick={() => handleDeleteDonation(d.id)}
-                        disabled={deleting === d.id}
-                        className="text-red-600 hover:text-red-900 p-2"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                donations.map((d) => {
+                  const statusValue = (d.status || "").toLowerCase();
+                  const statusLabel = d.status ? d.status.toLowerCase() : "-";
+                  const donationName = d.igracka?.naziv || d.naziv || "Nepoznata";
+                  const donorEmail = d.donator?.email || d.donatorEmail || "-";
+
+                  return (
+                    <tr key={d.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4">{donationName}</td>
+                      <td className="p-4 text-sm">{donorEmail}</td>
+                      <td className="p-4">
+                        <span
+                          className={`px-3 py-1 rounded text-xs font-semibold ${
+                            statusValue === "dostupno"
+                              ? "bg-green-100 text-green-800"
+                              : statusValue === "rezervirano"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm text-gray-600">
+                        {formatDate(d.datumKreiranja)}
+                      </td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleDeleteDonation(d.id)}
+                          disabled={deleting === d.id}
+                          className="text-red-600 hover:text-red-900 p-2"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -350,13 +364,15 @@ export default function AdminDashboard() {
                 </tr>
               ) : (
                 campaigns.map((c) => {
-                  const isActive = new Date(c.rokTrajanja) > new Date();
+                  const rok = c.rokTrajanja ? new Date(c.rokTrajanja) : null;
+                  const isActive = rok ? rok > new Date() : false;
+                  const organizerEmail = c.primatelj?.email || c.primateljEmail || "-";
                   return (
                     <tr key={c.id} className="border-b hover:bg-gray-50">
                       <td className="p-4">{c.napredak || "Kampanja"}</td>
-                      <td className="p-4 text-sm">{c.primatelj?.email || "-"}</td>
+                      <td className="p-4 text-sm">{organizerEmail}</td>
                       <td className="p-4 text-sm">
-                        {new Date(c.rokTrajanja).toLocaleDateString("hr-HR")}
+                        {formatDate(c.rokTrajanja)}
                       </td>
                       <td className="p-4">
                         <span
