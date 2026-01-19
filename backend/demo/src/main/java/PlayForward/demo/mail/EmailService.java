@@ -1,13 +1,18 @@
 package PlayForward.demo.mail;
 
 import PlayForward.demo.review.Recenzija;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     private final JavaMailSender mailSender;
     private final String fromAddress;
@@ -20,12 +25,15 @@ public class EmailService {
                 : fromAddress.trim();
     }
 
-    public void sendReviewNotification(String to, Recenzija recenzija) {
+    @Async
+    public void sendReviewNotificationAsync(String to, Recenzija recenzija) {
         if (to == null || to.isBlank()) {
-            throw new RuntimeException("Email primatelja nije definiran.");
+            log.warn("Email primatelja nije definiran, preskacem slanje recenzije.");
+            return;
         }
         if (recenzija == null) {
-            throw new RuntimeException("Recenzija nije dostupna.");
+            log.warn("Recenzija nije dostupna, preskacem slanje emaila.");
+            return;
         }
 
         String igrackaNaziv = recenzija.getZahtjev() != null
@@ -33,19 +41,23 @@ public class EmailService {
                 ? recenzija.getZahtjev().getIgracka().getNaziv()
                 : "Nepoznato";
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        if (fromAddress != null) {
-            message.setFrom(fromAddress);
-        }
-        message.setSubject("Nova recenzija na PlayForward");
-        message.setText(
-                "Dobili ste novu recenziju za donaciju.\n\n" +
-                "Igracka: " + igrackaNaziv + "\n" +
-                "Ocjena: " + recenzija.getOcjena() + "/5\n\n" +
-                "Komentar:\n" + recenzija.getTekst() + "\n"
-        );
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            if (fromAddress != null) {
+                message.setFrom(fromAddress);
+            }
+            message.setSubject("Nova recenzija na PlayForward");
+            message.setText(
+                    "Dobili ste novu recenziju za donaciju.\n\n" +
+                    "Igracka: " + igrackaNaziv + "\n" +
+                    "Ocjena: " + recenzija.getOcjena() + "/5\n\n" +
+                    "Komentar:\n" + recenzija.getTekst() + "\n"
+            );
 
-        mailSender.send(message);
+            mailSender.send(message);
+        } catch (Exception ex) {
+            log.warn("Neuspjelo slanje emaila za recenziju.", ex);
+        }
     }
 }

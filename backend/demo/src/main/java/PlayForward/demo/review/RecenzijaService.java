@@ -11,6 +11,8 @@ import PlayForward.demo.user.DonatorRepository;
 import PlayForward.demo.user.KorisnikRepository;
 import PlayForward.demo.user.Primatelj;
 import PlayForward.demo.user.PrimateljRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,8 @@ import java.util.List;
 
 @Service
 public class RecenzijaService {
+
+    private static final Logger log = LoggerFactory.getLogger(RecenzijaService.class);
 
     private final RecenzijaRepository recenzijaRepo;
     private final ZahtjevRepository zahtjevRepo;
@@ -110,14 +114,11 @@ public class RecenzijaService {
                 ? zahtjev.getDonator().getKorisnik().getEmail()
                 : null;
         if (donorEmail == null || donorEmail.isBlank()) {
-            throw new RuntimeException("Email donatora nije dostupan.");
+            log.warn("Email donatora nije dostupan za zahtjev {}.", zahtjev.getId());
+            return saved;
         }
 
-        try {
-            emailService.sendReviewNotification(donorEmail, saved);
-        } catch (Exception ex) {
-            throw new RuntimeException("Greška pri slanju emaila donatoru.", ex);
-        }
+        emailService.sendReviewNotificationAsync(donorEmail, saved);
 
         return saved;
     }
