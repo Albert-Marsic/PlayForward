@@ -38,10 +38,13 @@ export function AuthProvider({ children }) {
 
       const data = await response.json();
       if (data.authenticated) {
+        const role = data.role ?? data.uloga;
         setUser({
           name: data.name ?? data.email,
           email: data.email,
           picture: data.picture,
+          role,
+          uloga: role,
         });
       } else {
         localStorage.removeItem(TOKEN_KEY);

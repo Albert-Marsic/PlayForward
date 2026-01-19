@@ -1,14 +1,12 @@
-import axios from "axios";
-import { API_BASE_URL } from "../lib/config";
 import { api } from "../lib/api";
 
 /**
- * Pošalji recenziju za donatora
- * @param {Object} reviewData - { donatorId, ocjena, tekst }
+ * Pošalji recenziju za završeni zahtjev
+ * @param {Object} reviewData - { zahtjevId, ocjena, tekst }
  */
 export async function submitReview(reviewData) {
-  if (!reviewData.donatorId || !reviewData.ocjena || !reviewData.tekst) {
-    throw new Error("Donator ID, ocjena i tekst su obavezni");
+  if (!reviewData.zahtjevId || !reviewData.ocjena || !reviewData.tekst) {
+    throw new Error("ID zahtjeva, ocjena i tekst su obavezni");
   }
 
   if (reviewData.ocjena < 1 || reviewData.ocjena > 5) {
@@ -20,7 +18,7 @@ export async function submitReview(reviewData) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        donatorId: reviewData.donatorId,
+        zahtjevId: reviewData.zahtjevId,
         ocjena: reviewData.ocjena,
         tekst: reviewData.tekst.trim()
       })
@@ -38,12 +36,9 @@ export async function submitReview(reviewData) {
  * Dohvati sve recenzije za donatora
  */
 export async function getReviewsForDonator(donatorId) {
-  if (!donatorId) {
-    throw new Error("ID donatora je obavezan");
-  }
-
   try {
-    const response = await api(`/recenzije/donator/${donatorId}`);
+    const endpoint = donatorId ? `/recenzije/donator/${donatorId}` : "/recenzije/moje";
+    const response = await api(endpoint);
     if (!response.ok) throw new Error("Greška pri dohvaćanju recenzija");
     return await response.json();
   } catch (err) {

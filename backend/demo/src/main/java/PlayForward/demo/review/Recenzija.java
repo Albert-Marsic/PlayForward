@@ -2,6 +2,7 @@ package PlayForward.demo.review;
 
 import PlayForward.demo.user.Donator;
 import PlayForward.demo.user.Primatelj;
+import PlayForward.demo.request.Zahtjev;
 import jakarta.persistence.*;
 
 @Entity
@@ -16,8 +17,12 @@ public class Recenzija {
     @Column(name = "ocjena", nullable = false)
     private Integer ocjena;
 
-    @Column(name = "tekst", length = 100)
+    @Column(name = "tekst", length = 500)
     private String tekst;
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "idzahtjev", nullable = false, unique = true)
+    private Zahtjev zahtjev;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "idprimatelj", nullable = false)
@@ -41,6 +46,10 @@ public class Recenzija {
         return tekst;
     }
 
+    public Zahtjev getZahtjev() {
+        return zahtjev;
+    }
+
     public Primatelj getPrimatelj() {
         return primatelj;
     }
@@ -55,6 +64,10 @@ public class Recenzija {
 
     public void setTekst(String tekst) {
         this.tekst = tekst;
+    }
+
+    public void setZahtjev(Zahtjev zahtjev) {
+        this.zahtjev = zahtjev;
     }
 
     public void setPrimatelj(Primatelj primatelj) {

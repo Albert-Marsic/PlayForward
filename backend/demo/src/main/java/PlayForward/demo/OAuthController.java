@@ -2,6 +2,7 @@ package PlayForward.demo;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import PlayForward.demo.user.AdminService;
 import PlayForward.demo.user.Donator;
 import PlayForward.demo.user.DonatorRepository;
 import PlayForward.demo.user.Korisnik;
@@ -32,13 +33,16 @@ public class OAuthController {
     private final KorisnikRepository korisnikRepository;
     private final DonatorRepository donatorRepository;
     private final PrimateljRepository primateljRepository;
+    private final AdminService adminService;
 
     public OAuthController(KorisnikRepository korisnikRepository,
                            DonatorRepository donatorRepository,
-                           PrimateljRepository primateljRepository) {
+                           PrimateljRepository primateljRepository,
+                           AdminService adminService) {
         this.korisnikRepository = korisnikRepository;
         this.donatorRepository = donatorRepository;
         this.primateljRepository = primateljRepository;
+        this.adminService = adminService;
     }
 
     @GetMapping("/me")
@@ -49,10 +53,19 @@ public class OAuthController {
         }
 
         Map<String, Object> body = new HashMap<>();
+        String email = principal.getAttribute("email");
+
         body.put("authenticated", true);
         body.put("name", principal.getAttribute("name"));
-        body.put("email", principal.getAttribute("email"));
+        body.put("email", email);
         body.put("picture", principal.getAttribute("picture"));
+
+        boolean isAdmin = adminService.isAdminEmail(email);
+        body.put("admin", isAdmin);
+        if (isAdmin) {
+            body.put("role", "ADMIN");
+            body.put("uloga", "ADMIN");
+        }
 
         return ResponseEntity.ok(body);
     }

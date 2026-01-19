@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { getMyRequests, withdrawRequest } from "@/api/dashboard";
+import { getMyRequests, withdrawRequest, completeRequest } from "@/api/dashboard";
 
 export default function PrimateljDashboard() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [withdrawing, setWithdrawing] = useState(null);
+  const [completing, setCompleting] = useState(null);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -40,6 +41,21 @@ export default function PrimateljDashboard() {
       alert("Greška pri odustajanju: " + err.message);
     } finally {
       setWithdrawing(null);
+    }
+  };
+
+  const handleComplete = async (requestId) => {
+    if (!confirm("Potvrdite da ste preuzeli donaciju.")) return;
+
+    try {
+      setCompleting(requestId);
+      const updated = await completeRequest(requestId);
+      setRequests(requests.map(req => (req.id === requestId ? updated : req)));
+      alert("Preuzimanje je potvrđeno");
+    } catch (err) {
+      alert("Greška pri potvrdi preuzimanja: " + err.message);
+    } finally {
+      setCompleting(null);
     }
   };
 
@@ -127,7 +143,7 @@ export default function PrimateljDashboard() {
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold">{request.igracka?.naziv || "Igračka"}</h2>
                   <p className="text-sm text-gray-600">
-                    Donator: {request.igracka?.donator?.email || "Nepoznato"}
+                    Donator: {request.donator?.korisnik?.email || request.igracka?.donator?.korisnik?.email || "Nepoznato"}
                   </p>
                   <p className="text-sm text-gray-600">
                     Datumi zahtjeva: {new Date(request.datumZahtjeva).toLocaleDateString('hr-HR')}
@@ -160,6 +176,17 @@ export default function PrimateljDashboard() {
                   {request.status === "COMPLETED" && (
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/recenzija/${request.id}`}>Ocijeni donatora</Link>
+                    </Button>
+                  )}
+
+                  {request.status === "APPROVED" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleComplete(request.id)}
+                      disabled={completing === request.id}
+                    >
+                      {completing === request.id ? "Potvrđujem..." : "Potvrdi preuzimanje"}
                     </Button>
                   )}
 

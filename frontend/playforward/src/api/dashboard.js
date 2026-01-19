@@ -62,3 +62,19 @@ export async function withdrawRequest(requestId) {
     throw err;
   }
 }
+
+/**
+ * Potvrdi preuzimanje zahtjeva (status -> COMPLETED)
+ */
+export async function completeRequest(requestId) {
+  if (!requestId) throw new Error("ID zahtjeva je obavezan");
+
+  try {
+    const response = await api(`/zahtjevi/${requestId}/preuzeto`, { method: "POST" });
+    if (!response.ok) throw new Error("Greška pri potvrdi preuzimanja");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri potvrdi preuzimanja:", err);
+    throw err;
+  }
+}
