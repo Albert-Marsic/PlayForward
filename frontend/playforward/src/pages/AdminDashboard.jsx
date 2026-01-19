@@ -38,7 +38,11 @@ export default function AdminDashboard() {
     user?.role === "ADMIN" || user?.uloga === "ADMIN" || user?.admin === true;
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
       navigate("/prijava");
       return;
     }
