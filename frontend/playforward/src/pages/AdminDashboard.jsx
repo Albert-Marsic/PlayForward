@@ -34,7 +34,8 @@ export default function AdminDashboard() {
   };
 
   // Provera da li je korisnik admin
-  const isAdmin = user?.role === "ADMIN" || user?.uloga === "ADMIN";
+  const isAdmin =
+    user?.role === "ADMIN" || user?.uloga === "ADMIN" || user?.admin === true;
 
   useEffect(() => {
     if (!authLoading && !user) {
