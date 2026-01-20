@@ -200,38 +200,44 @@ public class AdminUserService {
             }
 
             List<Igracka> donatorIgracke = igrackaRepository.findByDonator_Id(korisnikId);
+            List<Long> igrackaIds = new ArrayList<>();
             if (!donatorIgracke.isEmpty()) {
-                List<Long> igrackaIds = new ArrayList<>(donatorIgracke.size());
+                igrackaIds = new ArrayList<>(donatorIgracke.size());
                 for (Igracka igracka : donatorIgracke) {
                     if (igracka.getId() != null) {
                         igrackaIds.add(igracka.getId());
                     }
                 }
-                if (!igrackaIds.isEmpty()) {
-                    List<Zahtjev> zahtjevi = zahtjevRepository.findByIgracka_IdIn(igrackaIds);
-                    if (!zahtjevi.isEmpty()) {
-                        List<Long> zahtjevIds = new ArrayList<>(zahtjevi.size());
-                        for (Zahtjev zahtjev : zahtjevi) {
-                            if (zahtjev.getId() != null) {
-                                zahtjevIds.add(zahtjev.getId());
-                            }
-                        }
-                        if (!zahtjevIds.isEmpty()) {
-                            recenzijaRepository.deleteByZahtjev_IdIn(zahtjevIds);
-                        }
-                        zahtjevRepository.deleteAll(zahtjevi);
-                        flushNow();
-                    }
-                }
             }
 
             // Prvo ukloni ovisne zapise (recenzije, zahtjeve).
-            recenzijaRepository.deleteByPrimatelj_Id(korisnikId);
-            recenzijaRepository.deleteByDonator_Id(korisnikId);
-            zahtjevRepository.deleteByPrimatelj_Id(korisnikId);
-            zahtjevRepository.deleteByDonator_Id(korisnikId);
-            flushNow();
-
+            Set<Long> zahtjevIds = new HashSet<>();
+            List<Zahtjev> primateljZahtjevi = zahtjevRepository.findByPrimatelj_IdOrderByDatumZahtjevaDesc(korisnikId);
+            for (Zahtjev zahtjev : primateljZahtjevi) {
+                if (zahtjev.getId() != null) {
+                    zahtjevIds.add(zahtjev.getId());
+                }
+            }
+            List<Zahtjev> donatorZahtjevi = zahtjevRepository.findByDonator_IdOrderByDatumZahtjevaDesc(korisnikId);
+            for (Zahtjev zahtjev : donatorZahtjevi) {
+                if (zahtjev.getId() != null) {
+                    zahtjevIds.add(zahtjev.getId());
+                }
+            }
+            if (!igrackaIds.isEmpty()) {
+                List<Zahtjev> igrackaZahtjevi = zahtjevRepository.findByIgracka_IdIn(igrackaIds);
+                for (Zahtjev zahtjev : igrackaZahtjevi) {
+                    if (zahtjev.getId() != null) {
+                        zahtjevIds.add(zahtjev.getId());
+                    }
+                }
+            }
+            if (!zahtjevIds.isEmpty()) {
+                recenzijaRepository.deleteByZahtjev_IdIn(zahtjevIds);
+                flushNow();
+                zahtjevRepository.deleteAllById(zahtjevIds);
+                flushNow();
+            }
             boolean isPrimatelj = primateljRepository.existsById(korisnikId);
             boolean isDonator = donatorRepository.existsById(korisnikId);
 
