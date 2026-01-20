@@ -153,8 +153,15 @@ public class AdminUserService {
     @Transactional(readOnly = true)
     public java.util.Map<String, Object> getStats() {
         long ukupnoKorisnika = korisnikRepository.count();
-        long aktivnihDonacija = igrackaRepository.countByStatus(StatusIgracke.DOSTUPNO);
         long ukupnoZahtjeva = zahtjevRepository.count();
+
+        long aktivnihDonacija = 0;
+        List<Igracka> igracke = igrackaRepository.findAll();
+        for (Igracka igracka : igracke) {
+            if (igracka.getStatus() == StatusIgracke.DOSTUPNO) {
+                aktivnihDonacija++;
+            }
+        }
 
         long aktivnihKampanja = 0;
         List<Kampanja> kampanje = kampanjaRepository.findAll();

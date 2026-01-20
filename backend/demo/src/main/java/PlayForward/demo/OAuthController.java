@@ -54,9 +54,18 @@ public class OAuthController {
 
         Map<String, Object> body = new HashMap<>();
         String email = principal.getAttribute("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("authenticated", false, "message", "Email is missing from OAuth profile"));
+        }
+        Korisnik korisnik = ensureKorisnik(email, principal.getAttribute("name"));
+        adminService.ensureAdminFor(korisnik);
+        String displayName = korisnik.getImeKorisnik() != null
+                ? korisnik.getImeKorisnik()
+                : principal.getAttribute("name");
 
         body.put("authenticated", true);
-        body.put("name", principal.getAttribute("name"));
+        body.put("name", displayName);
         body.put("email", email);
         body.put("picture", principal.getAttribute("picture"));
 
@@ -88,11 +97,7 @@ public class OAuthController {
                     .body(Map.of("message", "Email is missing from OAuth profile"));
         }
 
-        Korisnik korisnik = korisnikRepository.findByEmail(email).orElse(null);
-        if (korisnik == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "User profile not found"));
-        }
+        Korisnik korisnik = ensureKorisnik(email, principal.getAttribute("name"));
 
         String role = resolveRole(korisnik.getId());
         if ("CONFLICT".equals(role)) {
@@ -221,6 +226,21 @@ public class OAuthController {
             return trimmed.substring(0, DISPLAY_NAME_MAX);
         }
         return trimmed;
+    }
+
+    private Korisnik ensureKorisnik(String email, String name) {
+        Korisnik korisnik = korisnikRepository.findByEmail(email).orElse(null);
+        if (korisnik == null) {
+            Korisnik newUser = new Korisnik();
+            newUser.setEmail(email);
+            newUser.setImeKorisnik(normalizeDisplayName(name, email));
+            return korisnikRepository.save(newUser);
+        }
+        if (korisnik.getImeKorisnik() == null || korisnik.getImeKorisnik().isBlank()) {
+            korisnik.setImeKorisnik(normalizeDisplayName(name, email));
+            return korisnikRepository.save(korisnik);
+        }
+        return korisnik;
     }
 
     private static class RoleRequest {

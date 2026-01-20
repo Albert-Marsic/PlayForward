@@ -5,7 +5,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 
-@Service
+@Service("notificationEmailService")
 public class EmailService {
 
     private final JavaMailSender mailSender;

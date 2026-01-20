@@ -1,5 +1,6 @@
 package PlayForward.demo;
 
+import PlayForward.demo.user.AdminService;
 import PlayForward.demo.user.Donator;
 import PlayForward.demo.user.DonatorRepository;
 import PlayForward.demo.user.Korisnik;
@@ -46,6 +47,9 @@ class OAuthControllerRoleTest {
 
     @MockBean
     private JwtTokenProvider tokenProvider;
+
+    @MockBean
+    private AdminService adminService;
 
     @Test
     void getRoleReturnsDonator() throws Exception {
