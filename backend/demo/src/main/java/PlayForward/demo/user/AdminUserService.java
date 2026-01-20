@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,6 +45,9 @@ public class AdminUserService {
     private final ZahtjevRepository zahtjevRepository;
     private final RecenzijaRepository recenzijaRepository;
     private final AdminService adminService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public AdminUserService(KorisnikRepository korisnikRepository,
                             AdminRepository adminRepository,
@@ -186,85 +191,104 @@ public class AdminUserService {
 
     @Transactional
     public void deleteUserById(Long korisnikId) {
-        if (korisnikId == null || korisnikId <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Neispravan ID korisnika.");
-        }
-        if (!korisnikRepository.existsById(korisnikId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik ne postoji.");
-        }
+        try {
+            if (korisnikId == null || korisnikId <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Neispravan ID korisnika.");
+            }
+            if (!korisnikRepository.existsById(korisnikId)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik ne postoji.");
+            }
 
-        List<Igracka> donatorIgracke = igrackaRepository.findByDonator_Id(korisnikId);
-        if (!donatorIgracke.isEmpty()) {
-            List<Long> igrackaIds = new ArrayList<>(donatorIgracke.size());
-            for (Igracka igracka : donatorIgracke) {
-                if (igracka.getId() != null) {
-                    igrackaIds.add(igracka.getId());
+            List<Igracka> donatorIgracke = igrackaRepository.findByDonator_Id(korisnikId);
+            if (!donatorIgracke.isEmpty()) {
+                List<Long> igrackaIds = new ArrayList<>(donatorIgracke.size());
+                for (Igracka igracka : donatorIgracke) {
+                    if (igracka.getId() != null) {
+                        igrackaIds.add(igracka.getId());
+                    }
+                }
+                if (!igrackaIds.isEmpty()) {
+                    List<Zahtjev> zahtjevi = zahtjevRepository.findByIgracka_IdIn(igrackaIds);
+                    if (!zahtjevi.isEmpty()) {
+                        List<Long> zahtjevIds = new ArrayList<>(zahtjevi.size());
+                        for (Zahtjev zahtjev : zahtjevi) {
+                            if (zahtjev.getId() != null) {
+                                zahtjevIds.add(zahtjev.getId());
+                            }
+                        }
+                        if (!zahtjevIds.isEmpty()) {
+                            recenzijaRepository.deleteByZahtjev_IdIn(zahtjevIds);
+                        }
+                        zahtjevRepository.deleteAll(zahtjevi);
+                        flushNow();
+                    }
                 }
             }
-            if (!igrackaIds.isEmpty()) {
-                List<Zahtjev> zahtjevi = zahtjevRepository.findByIgracka_IdIn(igrackaIds);
-                if (!zahtjevi.isEmpty()) {
-                    List<Long> zahtjevIds = new ArrayList<>(zahtjevi.size());
-                    for (Zahtjev zahtjev : zahtjevi) {
-                        if (zahtjev.getId() != null) {
-                            zahtjevIds.add(zahtjev.getId());
+
+            // Prvo ukloni ovisne zapise (recenzije, zahtjeve).
+            recenzijaRepository.deleteByPrimatelj_Id(korisnikId);
+            recenzijaRepository.deleteByDonator_Id(korisnikId);
+            zahtjevRepository.deleteByPrimatelj_Id(korisnikId);
+            zahtjevRepository.deleteByDonator_Id(korisnikId);
+            flushNow();
+
+            boolean isPrimatelj = primateljRepository.existsById(korisnikId);
+            boolean isDonator = donatorRepository.existsById(korisnikId);
+
+            if (isPrimatelj) {
+                // Oslobodi rezervacije korisnika i vrati oglase u dostupno stanje.
+                List<Igracka> rezervirane = igrackaRepository.findByPrimatelj_Id(korisnikId);
+                if (!rezervirane.isEmpty()) {
+                    for (Igracka igracka : rezervirane) {
+                        igracka.setPrimatelj(null);
+                        igracka.setStatus(StatusIgracke.DOSTUPNO);
+                    }
+                    igrackaRepository.saveAll(rezervirane);
+                    flushNow();
+                }
+
+                // Ukloni kampanje (s pripadajucim popisima igracaka).
+                List<Kampanja> kampanje = kampanjaRepository.findByPrimatelj_Id(korisnikId);
+                if (!kampanje.isEmpty()) {
+                    for (Kampanja kampanja : kampanje) {
+                        if (kampanja.getId() != null) {
+                            popisIgracakaRepository.deleteByKampanja_Id(kampanja.getId());
                         }
                     }
-                    if (!zahtjevIds.isEmpty()) {
-                        recenzijaRepository.deleteByZahtjev_IdIn(zahtjevIds);
-                    }
-                    zahtjevRepository.deleteAll(zahtjevi);
+                    kampanjaRepository.deleteAll(kampanje);
+                    flushNow();
                 }
+
+                primateljRepository.deleteById(korisnikId);
+                flushNow();
             }
-        }
 
-        // Prvo ukloni ovisne zapise (recenzije, zahtjeve).
-        recenzijaRepository.deleteByPrimatelj_Id(korisnikId);
-        recenzijaRepository.deleteByDonator_Id(korisnikId);
-        zahtjevRepository.deleteByPrimatelj_Id(korisnikId);
-        zahtjevRepository.deleteByDonator_Id(korisnikId);
-
-        boolean isPrimatelj = primateljRepository.existsById(korisnikId);
-        boolean isDonator = donatorRepository.existsById(korisnikId);
-
-        if (isPrimatelj) {
-            // Oslobodi rezervacije korisnika i vrati oglase u dostupno stanje.
-            List<Igracka> rezervirane = igrackaRepository.findByPrimatelj_Id(korisnikId);
-            if (!rezervirane.isEmpty()) {
-                for (Igracka igracka : rezervirane) {
-                    igracka.setPrimatelj(null);
-                    igracka.setStatus(StatusIgracke.DOSTUPNO);
+            if (isDonator) {
+                // Ukloni sve oglase donatora (ukljucujuci aktivne).
+                for (Igracka igracka : donatorIgracke) {
+                    igrackaRepository.delete(igracka);
                 }
-                igrackaRepository.saveAll(rezervirane);
+                flushNow();
+                donatorRepository.deleteById(korisnikId);
+                flushNow();
             }
 
-            // Ukloni kampanje (s pripadajucim popisima igracaka).
-            List<Kampanja> kampanje = kampanjaRepository.findByPrimatelj_Id(korisnikId);
-            if (!kampanje.isEmpty()) {
-                for (Kampanja kampanja : kampanje) {
-                    if (kampanja.getId() != null) {
-                        popisIgracakaRepository.deleteByKampanja_Id(kampanja.getId());
-                    }
-                }
-                kampanjaRepository.deleteAll(kampanje);
+            if (adminRepository.existsById(korisnikId)) {
+                adminRepository.deleteById(korisnikId);
+                flushNow();
             }
 
-            primateljRepository.deleteById(korisnikId);
+            korisnikRepository.deleteById(korisnikId);
+            flushNow();
+        } catch (ResponseStatusException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Brisanje korisnika nije uspjelo: " + rootCauseMessage(ex),
+                    ex
+            );
         }
-
-        if (isDonator) {
-            // Ukloni sve oglase donatora (ukljucujuci aktivne).
-            for (Igracka igracka : donatorIgracke) {
-                igrackaRepository.delete(igracka);
-            }
-            donatorRepository.deleteById(korisnikId);
-        }
-
-        if (adminRepository.existsById(korisnikId)) {
-            adminRepository.deleteById(korisnikId);
-        }
-
-        korisnikRepository.deleteById(korisnikId);
     }
 
     @Transactional
@@ -335,5 +359,20 @@ public class AdminUserService {
         int start = Math.min(offset, items.size());
         int end = Math.min(start + limit, items.size());
         return items.subList(start, end);
+    }
+
+    private void flushNow() {
+        if (entityManager != null) {
+            entityManager.flush();
+        }
+    }
+
+    private String rootCauseMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+        String message = current.getMessage();
+        return (message == null || message.isBlank()) ? current.getClass().getSimpleName() : message;
     }
 }
