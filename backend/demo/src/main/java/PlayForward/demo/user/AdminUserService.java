@@ -13,6 +13,7 @@ import PlayForward.demo.user.dto.AdminDonationView;
 import PlayForward.demo.user.dto.AdminEmailView;
 import PlayForward.demo.user.dto.AdminIgrackaView;
 import PlayForward.demo.user.dto.AdminUserView;
+import PlayForward.demo.campaign.PopisIgracakaRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ public class AdminUserService {
     private final PrimateljRepository primateljRepository;
     private final IgrackaRepository igrackaRepository;
     private final KampanjaRepository kampanjaRepository;
+    private final PopisIgracakaRepository popisIgracakaRepository;
     private final ZahtjevRepository zahtjevRepository;
     private final RecenzijaRepository recenzijaRepository;
     private final AdminService adminService;
@@ -48,6 +50,7 @@ public class AdminUserService {
                             PrimateljRepository primateljRepository,
                             IgrackaRepository igrackaRepository,
                             KampanjaRepository kampanjaRepository,
+                            PopisIgracakaRepository popisIgracakaRepository,
                             ZahtjevRepository zahtjevRepository,
                             RecenzijaRepository recenzijaRepository,
                             AdminService adminService) {
@@ -57,6 +60,7 @@ public class AdminUserService {
         this.primateljRepository = primateljRepository;
         this.igrackaRepository = igrackaRepository;
         this.kampanjaRepository = kampanjaRepository;
+        this.popisIgracakaRepository = popisIgracakaRepository;
         this.zahtjevRepository = zahtjevRepository;
         this.recenzijaRepository = recenzijaRepository;
         this.adminService = adminService;
@@ -212,6 +216,11 @@ public class AdminUserService {
             // Ukloni kampanje (s pripadajucim popisima igracaka).
             List<Kampanja> kampanje = kampanjaRepository.findByPrimatelj_Id(korisnikId);
             if (!kampanje.isEmpty()) {
+                for (Kampanja kampanja : kampanje) {
+                    if (kampanja.getId() != null) {
+                        popisIgracakaRepository.deleteByKampanja_Id(kampanja.getId());
+                    }
+                }
                 kampanjaRepository.deleteAll(kampanje);
             }
 
@@ -263,6 +272,7 @@ public class AdminUserService {
         }
         Kampanja kampanja = kampanjaRepository.findById(kampanjaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kampanja ne postoji."));
+        popisIgracakaRepository.deleteByKampanja_Id(kampanjaId);
         kampanjaRepository.delete(kampanja);
     }
 
