@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 export default function Kosarica() {
   const { cartItems, removeFromCart, clearCart } = useCart();
 
-  const totalPrice = cartItems.reduce((total, toy) => total + parseFloat(toy.cijena), 0).toFixed(2);  //reduce pretvara niz u vrijednost, total = trenutni zbroj, toy = trenutna igračka, 0 = početna vrijednost
+  const totalPrice = cartItems.reduce((total, toy) => total + parseFloat(toy.cijena || 0), 0).toFixed(2);
 
   if (cartItems.length === 0) {
     return (
@@ -25,24 +25,18 @@ export default function Kosarica() {
       <h1 className="text-2xl font-bold mb-6">Košarica</h1>
 
       {cartItems.map(toy => (
-        <div key={toy.idIgracka} className="flex gap-4 border p-4 mb-4">
+        <div key={toy.id || toy.idIgracka} className="flex gap-4 border p-4 mb-4">
           <img src={toy.fotografija} className="w-24 h-24 object-cover" />
           <div className="flex-1">
             <h2 className="font-semibold">{toy.naziv}</h2>
-            <p>{toy.kategorija}</p>
-            <p>Cijena: {toy.cijena.toFixed(2)} €</p>
+            <p className="text-sm text-gray-600">Kategorija: {toy.kategorija}</p>
+            <p className="text-sm text-gray-600">Cijena: {toy.cijena ? `${toy.cijena.toFixed(2)} €` : "N/A"}</p>
           </div>
-          <Button variant="outline" onClick={() => removeFromCart(toy.idIgracka)}>
+          <Button variant="outline" onClick={() => removeFromCart(toy.id || toy.idIgracka)}>
             Ukloni
           </Button>
         </div>
       ))}
-
-      
-      <div className="flx justify-between mt-6">
-        <Button variant="outline">Ukupna cijena: {totalPrice} €</Button>
-      </div>
-    
 
       <div className="flex justify-between mt-6">
         <Button variant="outline" onClick={clearCart}>

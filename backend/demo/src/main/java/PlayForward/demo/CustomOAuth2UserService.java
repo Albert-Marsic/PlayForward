@@ -1,5 +1,6 @@
 package PlayForward.demo;
 
+import PlayForward.demo.user.AdminService;
 import PlayForward.demo.user.Korisnik;
 import PlayForward.demo.user.KorisnikRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -13,10 +14,13 @@ import org.springframework.stereotype.Service;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final KorisnikRepository korisnikRepository;
+    private final AdminService adminService;
     private static final int DISPLAY_NAME_MAX = 20;
 
-    public CustomOAuth2UserService(KorisnikRepository korisnikRepository) {
+    public CustomOAuth2UserService(KorisnikRepository korisnikRepository,
+                                   AdminService adminService) {
         this.korisnikRepository = korisnikRepository;
+        this.adminService = adminService;
     }
 
     @Override
@@ -32,7 +36,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .orElseGet(Korisnik::new);
             korisnik.setEmail(email);
             korisnik.setImeKorisnik(fullName);
-            korisnikRepository.save(korisnik);
+            Korisnik saved = korisnikRepository.save(korisnik);
+            adminService.ensureAdminFor(saved);
         }
 
         return oAuth2User;

@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface KampanjaRepository extends JpaRepository<Kampanja, Long> {
+    java.util.List<Kampanja> findByPrimatelj_Id(Long primateljId);
 }

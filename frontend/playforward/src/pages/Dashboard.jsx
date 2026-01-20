@@ -93,6 +93,8 @@ export default function Dashboard() {
     : role === "RECIPIENT"
       ? "Primatelj"
       : null;
+  const isAdmin =
+    user?.admin === true || user?.role === "ADMIN" || user?.uloga === "ADMIN";
 
   if (loading) {
     return (
@@ -141,6 +143,18 @@ export default function Dashboard() {
           )}
         </div>
       </header>
+
+      {isAdmin && (
+        <section className="rounded-2xl border bg-white shadow-sm p-6 space-y-3">
+          <h2 className="text-xl font-semibold">Admin panel</h2>
+          <p className="text-gray-600">
+            Upravljajte korisnicima, donacijama i kampanjama.
+          </p>
+          <Button asChild>
+            <Link to="/admin">Otvori admin panel</Link>
+          </Button>
+        </section>
+      )}
 
       <section className="rounded-2xl border bg-white shadow-sm p-6 space-y-4">
         <h2 className="text-xl font-semibold">Vaša uloga</h2>

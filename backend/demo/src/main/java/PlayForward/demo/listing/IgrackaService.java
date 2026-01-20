@@ -5,7 +5,6 @@ import PlayForward.demo.security.SecurityUtil;
 import PlayForward.demo.user.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import PlayForward.demo.listing.dto.CreateIgrackaRequest;
 import PlayForward.demo.listing.dto.UpdateUvjetiRequest;
 
 import java.util.List;
@@ -166,7 +165,7 @@ public class IgrackaService {
     }
 
     // ---------------------------------------------------------
-    // BONUS: PRIMATELJ "ZATRAŽI" = REZERVIRA IGRAČKU
+    //  PRIMATELJ "ZATRAŽI" = REZERVIRA IGRAČKU
     // ---------------------------------------------------------
     @Transactional
     public Igracka rezerviraj(Long igrackaId) {
@@ -237,4 +236,27 @@ public class IgrackaService {
 
         igrackaRepo.delete(igracka);
     }
+    // ---------------------------------------------------------
+// DODANO radi IgrackaController-a (da se projekt kompilira)
+// ---------------------------------------------------------
+
+    // Frontend / controller može tražiti detalje igračke po ID-u
+    @Transactional(readOnly = true)
+    public Igracka getById(Long igrackaId) {
+        return igrackaRepo.findById(igrackaId)
+                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+    }
+
+    // Controller zove povuciOglas(), a prava logika je u povuci()
+    @Transactional
+    public void povuciOglas(Long igrackaId) {
+        povuci(igrackaId);
+    }
+
+    // Controller zove odustaniOdPreuzimanja(), a prava logika je u odustani()
+    @Transactional
+    public Igracka odustaniOdPreuzimanja(Long igrackaId) {
+        return odustani(igrackaId);
+    }
+
 }

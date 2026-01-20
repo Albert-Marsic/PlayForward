@@ -2,7 +2,8 @@ package PlayForward.demo.request;
 
 public enum StatusZahtjeva {
     PENDING,
-    ACCEPTED,
+    APPROVED,
+    COMPLETED,
     REJECTED,
-    CANCELLED
+    WITHDRAWN
 }
