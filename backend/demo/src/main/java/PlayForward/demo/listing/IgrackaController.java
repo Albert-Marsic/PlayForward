@@ -62,4 +62,11 @@ public class IgrackaController {
         service.povuci(id);
         return ResponseEntity.ok(java.util.Map.of("deleted", true));
     }
+
+    // F-010: Donator povlači oglas
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> povuciOglas(@PathVariable Long id) {
+        service.povuciOglas(id);
+        return ResponseEntity.ok().build();
+    }
 }

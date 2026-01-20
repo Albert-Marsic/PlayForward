@@ -5,6 +5,7 @@ import PlayForward.demo.security.SecurityUtil;
 import PlayForward.demo.user.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import PlayForward.demo.notification.EmailService;
 
 import java.util.List;
 
@@ -16,16 +17,19 @@ public class IgrackaService {
     private final KorisnikRepository korisnikRepo;
     private final DonatorRepository donatorRepo;
     private final PrimateljRepository primateljRepo;
+    private final EmailService emailService;
 
     // Spring će sam ubaciti (injectati) ove repozitorije
     public IgrackaService(IgrackaRepository igrackaRepo,
                           KorisnikRepository korisnikRepo,
                           DonatorRepository donatorRepo,
-                          PrimateljRepository primateljRepo) {
+                          PrimateljRepository primateljRepo,
+                          EmailService emailService) {
         this.igrackaRepo = igrackaRepo;
         this.korisnikRepo = korisnikRepo;
         this.donatorRepo = donatorRepo;
         this.primateljRepo = primateljRepo;
+        this.emailService = emailService;
     }
 
     // ---------------------------------------------------------
@@ -246,5 +250,36 @@ public class IgrackaService {
 
         return igrackaRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Igračka sa ID-om " + id + " ne postoji."));
+    }
+
+    // F-010: Donator povlači oglas (dozvoljeno samo ako nije rezervirano)
+    @Transactional
+    public void povuciOglas(Long igrackaId) {
+        Igracka i = igrackaRepo.findById(igrackaId)
+            .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+
+        Long currentId = currentKorisnikId();
+
+        // Samo donator koji je vlasnik oglasa smije povući
+        if (!i.getDonator().getId().equals(currentId)) {
+            throw new RuntimeException("Nemate pravo povući ovaj oglas.");
+        }
+
+        // Ne smije biti rezervirano
+        if (i.getStatus() == StatusIgracke.REZERVIRANO) {
+            throw new RuntimeException("Ne možete povući oglas jer je igračka rezervirana.");
+        }
+
+        // (Opcionalno) Mail donatoru kao potvrda povlačenja
+        String donatorEmail = i.getDonator().getKorisnik().getEmail();
+        String naziv = i.getNaziv();
+
+        igrackaRepo.delete(i);
+
+        emailService.send(
+            donatorEmail,
+            "Oglas povučen",
+            "Povukli ste oglas za igračku: " + naziv + "."
+        );
     }
 }
