@@ -282,4 +282,44 @@ public class IgrackaService {
             "Povukli ste oglas za igračku: " + naziv + "."
         );
     }
+
+    // F-011: Primatelj odustaje od preuzimanja -> opet dostupno + mail donatoru
+    @Transactional
+    public Igracka odustaniOdPreuzimanja(Long igrackaId) {
+        Igracka i = igrackaRepo.findById(igrackaId)
+            .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+
+        Long currentId = currentKorisnikId();
+
+        // Mora biti rezervirano i mora postojati primatelj
+        if (i.getStatus() != StatusIgracke.REZERVIRANO || i.getPrimatelj() == null) {
+            throw new RuntimeException("Igračka nije rezervirana, odustajanje nije moguće.");
+        }
+
+        // Samo primatelj koji je rezervirao smije odustati
+        if (!i.getPrimatelj().getId().equals(currentId)) {
+            throw new RuntimeException("Samo primatelj koji je rezervirao može odustati.");
+        }
+
+        // Podaci za mail donatoru
+        String donatorEmail = i.getDonator().getKorisnik().getEmail();
+        String naziv = i.getNaziv();
+        String primateljEmail = i.getPrimatelj().getKorisnik().getEmail();
+
+        // Vraćamo igračku u dostupno
+        i.setStatus(StatusIgracke.DOSTUPNO);
+        i.setPrimatelj(null);
+
+        Igracka saved = igrackaRepo.save(i);
+
+        // Mail donatoru
+        emailService.send(
+            donatorEmail,
+            "Primatelj je odustao od preuzimanja",
+            "Primatelj (" + primateljEmail + ") je odustao od preuzimanja igračke: " + naziv +
+            ". Igračka je opet dostupna."
+        );
+
+        return saved;
+    }
 }

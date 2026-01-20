@@ -69,4 +69,10 @@ public class IgrackaController {
         service.povuciOglas(id);
         return ResponseEntity.ok().build();
     }
+
+    // F-011: Primatelj odustaje od preuzimanja
+    @PostMapping("/{id}/odustani")
+    public ResponseEntity<Igracka> odustaniOdPreuzimanja(@PathVariable Long id) {
+        return ResponseEntity.ok(service.odustaniOdPreuzimanja(id));
+    }
 }
