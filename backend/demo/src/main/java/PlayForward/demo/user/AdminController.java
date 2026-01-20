@@ -59,8 +59,16 @@ public class AdminController {
     @DeleteMapping("/korisnici/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         requireAdmin();
-        adminUserService.deleteUserById(id);
-        return ResponseEntity.ok(Map.of("deleted", true, "userId", id));
+        try {
+            adminUserService.deleteUserById(id);
+            return ResponseEntity.ok(Map.of("deleted", true, "userId", id));
+        } catch (Exception ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Brisanje korisnika nije uspjelo: " + rootCauseMessage(ex),
+                    ex
+            );
+        }
     }
 
     @DeleteMapping("/donacije/{id}")
@@ -82,5 +90,14 @@ public class AdminController {
         if (!adminService.isAdminEmail(email)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin pristup je obavezan.");
         }
+    }
+
+    private String rootCauseMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+        String message = current.getMessage();
+        return (message == null || message.isBlank()) ? current.getClass().getSimpleName() : message;
     }
 }

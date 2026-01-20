@@ -193,6 +193,31 @@ public class AdminUserService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik ne postoji.");
         }
 
+        List<Igracka> donatorIgracke = igrackaRepository.findByDonator_Id(korisnikId);
+        if (!donatorIgracke.isEmpty()) {
+            List<Long> igrackaIds = new ArrayList<>(donatorIgracke.size());
+            for (Igracka igracka : donatorIgracke) {
+                if (igracka.getId() != null) {
+                    igrackaIds.add(igracka.getId());
+                }
+            }
+            if (!igrackaIds.isEmpty()) {
+                List<Zahtjev> zahtjevi = zahtjevRepository.findByIgracka_IdIn(igrackaIds);
+                if (!zahtjevi.isEmpty()) {
+                    List<Long> zahtjevIds = new ArrayList<>(zahtjevi.size());
+                    for (Zahtjev zahtjev : zahtjevi) {
+                        if (zahtjev.getId() != null) {
+                            zahtjevIds.add(zahtjev.getId());
+                        }
+                    }
+                    if (!zahtjevIds.isEmpty()) {
+                        recenzijaRepository.deleteByZahtjev_IdIn(zahtjevIds);
+                    }
+                    zahtjevRepository.deleteAll(zahtjevi);
+                }
+            }
+        }
+
         // Prvo ukloni ovisne zapise (recenzije, zahtjeve).
         recenzijaRepository.deleteByPrimatelj_Id(korisnikId);
         recenzijaRepository.deleteByDonator_Id(korisnikId);
@@ -229,7 +254,9 @@ public class AdminUserService {
 
         if (isDonator) {
             // Ukloni sve oglase donatora (ukljucujuci aktivne).
-            igrackaRepository.deleteByDonator_Id(korisnikId);
+            for (Igracka igracka : donatorIgracke) {
+                igrackaRepository.delete(igracka);
+            }
             donatorRepository.deleteById(korisnikId);
         }
 
