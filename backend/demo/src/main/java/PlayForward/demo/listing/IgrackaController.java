@@ -50,28 +50,15 @@ public class IgrackaController {
         return ResponseEntity.ok(service.rezerviraj(id));
     }
 
-    // BONUS: primatelj odustane
-    @PostMapping("/{id}/odustani")
-    public ResponseEntity<?> odustani(@PathVariable Long id) {
-        return ResponseEntity.ok(service.odustani(id));
-    }
-
-    // BONUS: donator povuče oglas dok je dostupno
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> povuci(@PathVariable Long id) {
-        service.povuci(id);
+    // F-010: Donator povlači oglas
+    @DeleteMapping("/{id}/povuci-oglas")
+    public ResponseEntity<?> povuciOglas(@PathVariable Long id) {
+        service.povuciOglas(id);
         return ResponseEntity.ok(java.util.Map.of("deleted", true));
     }
 
-    // F-010: Donator povlači oglas
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> povuciOglas(@PathVariable Long id) {
-        service.povuciOglas(id);
-        return ResponseEntity.ok().build();
-    }
-
     // F-011: Primatelj odustaje od preuzimanja
-    @PostMapping("/{id}/odustani")
+    @PostMapping("/{id}/odustani-preuzimanje")
     public ResponseEntity<Igracka> odustaniOdPreuzimanja(@PathVariable Long id) {
         return ResponseEntity.ok(service.odustaniOdPreuzimanja(id));
     }

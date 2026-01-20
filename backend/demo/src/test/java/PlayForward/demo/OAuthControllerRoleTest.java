@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,7 +57,7 @@ class OAuthControllerRoleTest {
         String email = "donator@example.com";
         Korisnik korisnik = korisnikWithId(10L, email);
 
-        when(korisnikRepository.findByEmail(email)).thenReturn(Optional.of(korisnik));
+        when(korisnikRepository.findByEmail(anyString())).thenReturn(Optional.of(korisnik));
         when(donatorRepository.existsById(10L)).thenReturn(true);
         when(primateljRepository.existsById(10L)).thenReturn(false);
 
@@ -72,7 +73,7 @@ class OAuthControllerRoleTest {
         String email = "recipient@example.com";
         Korisnik korisnik = korisnikWithId(22L, email);
 
-        when(korisnikRepository.findByEmail(email)).thenReturn(Optional.of(korisnik));
+        when(korisnikRepository.findByEmail(anyString())).thenReturn(Optional.of(korisnik));
         when(donatorRepository.existsById(22L)).thenReturn(false);
         when(primateljRepository.existsById(22L)).thenReturn(false, true);
         when(primateljRepository.saveAndFlush(any(Primatelj.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -97,6 +98,7 @@ class OAuthControllerRoleTest {
     private Korisnik korisnikWithId(Long id, String email) {
         Korisnik korisnik = new Korisnik();
         korisnik.setEmail(email);
+        korisnik.setImeKorisnik("Test User");
         ReflectionTestUtils.setField(korisnik, "id", id);
         return korisnik;
     }
