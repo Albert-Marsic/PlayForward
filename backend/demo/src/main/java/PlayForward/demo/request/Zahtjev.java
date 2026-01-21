@@ -4,6 +4,8 @@ import PlayForward.demo.listing.Igracka;
 import PlayForward.demo.user.Donator;
 import PlayForward.demo.user.Primatelj;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +19,8 @@ public class Zahtjev {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 12, nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "status_zahtjeva", nullable = false)
     private StatusZahtjeva status;
 
     @Column(name = "datumzahtjeva", nullable = false)

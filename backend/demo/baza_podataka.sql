@@ -1,20 +1,20 @@
 DO $$
 BEGIN
-    CREATE TYPE stanje_igracke AS ENUM ('novo', 'korišteno');
+    CREATE TYPE stanje_igracke AS ENUM ('NOVO', 'KORISTENO');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
 DO $$
 BEGIN
-    CREATE TYPE status_igracke AS ENUM ('dostupno', 'rezervirano');
+    CREATE TYPE status_igracke AS ENUM ('DOSTUPNO', 'REZERVIRANO');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
 DO $$
 BEGIN
-    CREATE TYPE status_popisa_igracaka AS ENUM ('potrebno', 'donirano');
+    CREATE TYPE status_popisa_igracaka AS ENUM ('POTREBNO', 'DONIRANO');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

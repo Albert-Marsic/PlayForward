@@ -3,6 +3,8 @@ package PlayForward.demo.listing;
 import PlayForward.demo.user.Donator;
 import PlayForward.demo.user.Primatelj;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "igracka")
@@ -20,7 +22,8 @@ public class Igracka {
     private String kategorija;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "stanje", length = 12, nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "stanje", columnDefinition = "stanje_igracke", nullable = false)
     private StanjeIgracke stanje;
 
     @Lob
@@ -28,7 +31,8 @@ public class Igracka {
     private String fotografija;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 12, nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "status_igracke", nullable = false)
     private StatusIgracke status = StatusIgracke.DOSTUPNO;
 
     @Column(name = "uvjeti", length = 100)

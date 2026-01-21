@@ -1,6 +1,8 @@
 package PlayForward.demo.campaign;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "popis_igracaka")
@@ -18,7 +20,8 @@ public class PopisIgracaka {
     private Integer kolicina;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 10, nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "status_popisa_igracaka", nullable = false)
     private StatusPopisa status;
 
     public PopisIgracaka() {}
