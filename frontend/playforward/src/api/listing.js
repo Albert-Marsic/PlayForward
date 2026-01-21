@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE_URL } from "../lib/config";
+import { api } from "../lib/api";
 
 /**
  * Kreira novu igračku (donator je objavljuje)
@@ -12,15 +11,19 @@ export async function createToy(toyData) {
   }
 
   try {
-    const res = await axios.post(`http://${API_BASE_URL}/api/igracke`, {
-      naziv: toyData.naziv.trim(),
-      kategorija: toyData.kategorija.trim(),
-      stanje: toyData.stanje,
-      fotografija: toyData.fotografija.trim(),
-      uvjeti: toyData.uvjeti ? toyData.uvjeti.trim() : null
+    const response = await api("/igracke", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        naziv: toyData.naziv.trim(),
+        kategorija: toyData.kategorija.trim(),
+        stanje: toyData.stanje,
+        fotografija: toyData.fotografija.trim(),
+        uvjeti: toyData.uvjeti ? toyData.uvjeti.trim() : null
+      })
     });
-
-    return res.data;
+    if (!response.ok) throw new Error("Greška pri dodavanju igračke");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri dodavanju igračke:", err);
     throw err;

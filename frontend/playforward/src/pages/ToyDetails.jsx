@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { getToyDetails } from "@/api/toyDetails";
 
 export default function ToyDetails() {
-  const { toyId } = useParams();
+  const { id } = useParams();
   const { addToCart } = useCart();
   const [toy, setToy] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export default function ToyDetails() {
     const fetchToy = async () => {
       try {
         setLoading(true);
-        const data = await getToyDetails(toyId);
+        const data = await getToyDetails(id);
         setToy(data);
         setError(null);
       } catch (err) {
@@ -29,7 +29,7 @@ export default function ToyDetails() {
     };
 
     fetchToy();
-  }, [toyId]);
+  }, [id]);
 
   if (loading) return <p className="p-6">Učitavanje...</p>;
   if (error) return <p className="p-6 text-red-500">{error}</p>;

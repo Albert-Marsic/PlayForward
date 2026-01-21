@@ -23,7 +23,8 @@ public class Igracka {
     @Column(name = "stanje", length = 12, nullable = false)
     private StanjeIgracke stanje;
 
-    @Column(name = "fotografija", length = 50)
+    @Lob
+    @Column(name = "fotografija", nullable = false)
     private String fotografija;
 
     @Enumerated(EnumType.STRING)

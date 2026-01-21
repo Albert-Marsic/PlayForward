@@ -5,7 +5,6 @@ import PlayForward.demo.security.SecurityUtil;
 import PlayForward.demo.user.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import PlayForward.demo.listing.dto.UpdateUvjetiRequest;
 
 import java.util.List;
 
@@ -165,6 +164,15 @@ public class IgrackaService {
     }
 
     // ---------------------------------------------------------
+    // 3.5) DONATOR - MOJE IGRAČKE
+    // ---------------------------------------------------------
+    @Transactional(readOnly = true)
+    public List<Igracka> listForCurrentDonator() {
+        Donator donator = currentDonatorOrThrow();
+        return igrackaRepo.findByDonator_Id(donator.getId());
+    }
+
+    // ---------------------------------------------------------
     //  PRIMATELJ "ZATRAŽI" = REZERVIRA IGRAČKU
     // ---------------------------------------------------------
     @Transactional
@@ -243,6 +251,9 @@ public class IgrackaService {
     // Frontend / controller može tražiti detalje igračke po ID-u
     @Transactional(readOnly = true)
     public Igracka getById(Long igrackaId) {
+        if (igrackaId == null || igrackaId <= 0) {
+            throw new RuntimeException("ID igračke nije validan.");
+        }
         return igrackaRepo.findById(igrackaId)
                 .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
     }

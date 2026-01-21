@@ -55,7 +55,7 @@ export default function CheckoutPage() {
       setError(null);
 
       // Dohvati samo ID-ove igračaka
-      const toyIds = cartItems.map(toy => toy.IDIgracka || toy.id);
+      const toyIds = cartItems.map(toy => toy.id || toy.idIgracka);
 
       // Pošalji zahtjev na backend
       await createCheckoutRequest(toyIds);
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
       setLoading(true);
       
       // Dohvati samo ID-ove igračaka
-      const toyIds = cartItems.map(toy => toy.IDIgracka || toy.id);
+      const toyIds = cartItems.map(toy => toy.id || toy.idIgracka);
 
       // Pošalji zahtjev na backend
       await createCheckoutRequest(toyIds);
@@ -112,7 +112,7 @@ export default function CheckoutPage() {
         <h2 className="font-semibold mb-3">Odabrane igračke</h2>
 
         {cartItems.map(toy => (
-          <div key={toy.IDIgracka || toy.id} className="flex justify-between mb-2">
+          <div key={toy.id || toy.idIgracka} className="flex justify-between mb-2">
             <span>{toy.naziv}</span>
             <span>{toy.cijena?.toFixed(2) || "0.00"} €</span>
           </div>

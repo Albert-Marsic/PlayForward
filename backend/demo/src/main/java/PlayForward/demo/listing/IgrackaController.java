@@ -38,6 +38,12 @@ public class IgrackaController {
         return ResponseEntity.ok(service.filter(kategorija, stanje));
     }
 
+    // 3.25) Donator pregled svojih igračaka
+    @GetMapping("/moje")
+    public ResponseEntity<List<Igracka>> listForCurrentDonator() {
+        return ResponseEntity.ok(service.listForCurrentDonator());
+    }
+
     // 3.5) Dohvati pojedinačnu igračku
     @GetMapping("/{id}")
     public ResponseEntity<Igracka> getById(@PathVariable Long id) {

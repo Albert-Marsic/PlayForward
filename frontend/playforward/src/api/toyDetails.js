@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE_URL } from "../lib/config";
+import { api } from "../lib/api";
 
 export async function getToyDetails(toyId) {
   if (!toyId) {
@@ -7,8 +6,9 @@ export async function getToyDetails(toyId) {
   }
 
   try {
-    const res = await axios.get(`http://${API_BASE_URL}/api/igracke/${toyId}`);
-    return res.data;
+    const response = await api(`/igracke/${toyId}`);
+    if (!response.ok) throw new Error("Greška pri dohvaćanju detalja igračke");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri dohvaćanju detalja igračke:", err);
     throw err;

@@ -1,5 +1,3 @@
-import axios from "axios";
-import { API_BASE_URL } from "../lib/config";
 import { api } from "../lib/api";
 
 /**
@@ -7,7 +5,7 @@ import { api } from "../lib/api";
  */
 export async function getDonatorToys() {
   try {
-    const response = await api("/igracke");
+    const response = await api("/igracke/moje");
     if (!response.ok) throw new Error("Greška pri dohvaćanju donacija");
     return await response.json();
   } catch (err) {
@@ -23,7 +21,7 @@ export async function withdrawToy(toyId) {
   if (!toyId) throw new Error("ID igračke je obavezan");
   
   try {
-    const response = await api(`/igracke/${toyId}`, { method: "DELETE" });
+    const response = await api(`/igracke/${toyId}/povuci-oglas`, { method: "DELETE" });
     if (!response.ok) throw new Error("Greška pri povlačenju oglasa");
     return await response.json();
   } catch (err) {

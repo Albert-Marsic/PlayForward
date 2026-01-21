@@ -55,7 +55,7 @@ export default function ToysPage() {
     } else if (sortBy === "najnovije") {
       result.sort((a, b) => new Date(b.datumKreiranjaIgracke) - new Date(a.datumKreiranjaIgracke));
     } else if (sortBy === "stanje") {
-      const stanjeOrder = { Ispravan: 1, "Malo korišten": 2, "Korišten": 3 };
+      const stanjeOrder = { NOVO: 1, KORISTENO: 2 };
       result.sort((a, b) => (stanjeOrder[a.stanje] || 99) - (stanjeOrder[b.stanje] || 99));
     }
 
@@ -113,10 +113,17 @@ export default function ToysPage() {
           </p>
         )}
 
-        {filteredToys.map(toy => (
+        {filteredToys.map(toy => {
+          const toyId = toy.id ?? toy.idIgracka;
+          const stanjeLabel = toy.stanje === "NOVO"
+            ? "Novo"
+            : toy.stanje === "KORISTENO"
+              ? "Korišteno"
+              : toy.stanje;
+          return (
           <Link
-            to={`/igracke/${toy.IDIgracka}`}
-            key={toy.IDIgracka}
+            to={`/igracke/${toyId}`}
+            key={toyId}
             className="border rounded-lg p-4 shadow bg-white hover:shadow-lg transition cursor-pointer"
           >
             <img
@@ -133,13 +140,13 @@ export default function ToysPage() {
               Kategorija: {toy.kategorija}
             </p>
             <p className="text-sm text-gray-600">
-              Stanje: {toy.stanje}
+              Stanje: {stanjeLabel}
             </p>
             <p className="text-sm text-gray-600">
               Status: {toy.status}
             </p>
           </Link>
-        ))}
+        )})}
       </div>
 
       {/* donacija */}

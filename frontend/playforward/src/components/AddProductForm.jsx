@@ -91,7 +91,10 @@ export function AddProductionForm({ className, ...props }) {
     ];
 
     // Dostupna stanja
-    const stanja = ["Novo", "Korišteno"];
+    const stanja = [
+        { value: "NOVO", label: "Novo" },
+        { value: "KORISTENO", label: "Korišteno" }
+    ];
 
     return (
         <form 
@@ -150,7 +153,7 @@ export function AddProductionForm({ className, ...props }) {
                     >
                         <option value="">Odaberi stanje</option>
                         {stanja.map(stan => (
-                            <option key={stan} value={stan}>{stan}</option>
+                            <option key={stan.value} value={stan.value}>{stan.label}</option>
                         ))}
                     </select>
                 </Field>

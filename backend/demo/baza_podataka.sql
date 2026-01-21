@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS IGRACKA (
     naziv VARCHAR(20) NOT NULL,
     kategorija VARCHAR(20) NOT NULL,
     stanje stanje_igracke NOT NULL,
-    fotografija VARCHAR(50) NOT NULL,
+    fotografija TEXT NOT NULL,
     status status_igracke NOT NULL,
     uvjeti VARCHAR(100),
     IDDonator INT NOT NULL,

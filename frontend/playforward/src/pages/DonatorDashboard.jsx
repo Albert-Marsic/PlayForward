@@ -34,7 +34,7 @@ export default function DonatorDashboard() {
     try {
       setWithdrawing(toyId);
       await withdrawToy(toyId);
-      setToys(toys.filter(toy => (toy.id || toy.IDIgracka) !== toyId));
+      setToys(toys.filter(toy => (toy.id || toy.idIgracka) !== toyId));
       alert("Oglas je uspješno povučen");
     } catch (err) {
       alert("Greška pri povlačenju oglasa: " + err.message);
@@ -84,7 +84,7 @@ export default function DonatorDashboard() {
       ) : (
         <div className="space-y-4">
           {toys.map(toy => (
-            <div key={toy.id || toy.IDIgracka} className="border rounded-lg p-4 shadow hover:shadow-lg transition">
+            <div key={toy.id || toy.idIgracka} className="border rounded-lg p-4 shadow hover:shadow-lg transition">
               <div className="flex gap-4">
                 {/* Slika */}
                 <img 
@@ -120,10 +120,10 @@ export default function DonatorDashboard() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleWithdraw(toy.id || toy.IDIgracka)}
-                      disabled={withdrawing === (toy.id || toy.IDIgracka)}
+                      onClick={() => handleWithdraw(toy.id || toy.idIgracka)}
+                      disabled={withdrawing === (toy.id || toy.idIgracka)}
                     >
-                      {withdrawing === (toy.id || toy.IDIgracka) ? "Povlačenje..." : "Povuci oglas"}
+                      {withdrawing === (toy.id || toy.idIgracka) ? "Povlačenje..." : "Povuci oglas"}
                     </Button>
                   )}
                   
