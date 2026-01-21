@@ -15,6 +15,20 @@ export async function getDonatorToys() {
 }
 
 /**
+ * Dohvati sve zahtjeve za donatora
+ */
+export async function getDonatorRequests() {
+  try {
+    const response = await api("/zahtjevi/donator");
+    if (!response.ok) throw new Error("Greška pri dohvaćanju zahtjeva donatora");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri dohvaćanju zahtjeva donatora:", err);
+    throw err;
+  }
+}
+
+/**
  * Pobvuci oglas (obriši igračku)
  */
 export async function withdrawToy(toyId) {
@@ -73,6 +87,22 @@ export async function completeRequest(requestId) {
     return await response.json();
   } catch (err) {
     console.error("Greška pri potvrdi preuzimanja:", err);
+    throw err;
+  }
+}
+
+/**
+ * Donator odobrava zahtjev (status -> APPROVED)
+ */
+export async function approveRequest(requestId) {
+  if (!requestId) throw new Error("ID zahtjeva je obavezan");
+
+  try {
+    const response = await api(`/zahtjevi/${requestId}/odobri`, { method: "POST" });
+    if (!response.ok) throw new Error("Greška pri odobravanju zahtjeva");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri odobravanju zahtjeva:", err);
     throw err;
   }
 }

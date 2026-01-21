@@ -1,31 +1,45 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { getDonatorToys, withdrawToy } from "@/api/dashboard";
+import { approveRequest, getDonatorRequests, getDonatorToys, withdrawToy } from "@/api/dashboard";
 
 export default function DonatorDashboard() {
   const [toys, setToys] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [withdrawing, setWithdrawing] = useState(null);
+  const [approving, setApproving] = useState(null);
 
   useEffect(() => {
-    const fetchToys = async () => {
+    let active = true;
+
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getDonatorToys();
-        setToys(data || []);
+        const [toysData, requestsData] = await Promise.all([
+          getDonatorToys(),
+          getDonatorRequests()
+        ]);
+        if (!active) return;
+        setToys(toysData || []);
+        setRequests(requestsData || []);
         setError(null);
       } catch (err) {
-        setError("Greška pri učitavanju vaših donacija");
+        if (!active) return;
+        setError("Greška pri učitavanju podataka donatora");
         console.error(err);
         setToys([]);
+        setRequests([]);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
-    fetchToys();
+    fetchData();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleWithdraw = async (toyId) => {
@@ -43,10 +57,31 @@ export default function DonatorDashboard() {
     }
   };
 
+  const handleApprove = async (requestId) => {
+    try {
+      setApproving(requestId);
+      const updated = await approveRequest(requestId);
+      setRequests(prev => prev.map(req => (req.id === requestId ? updated : req)));
+      if (updated?.igracka?.id) {
+        setToys(prev => prev.map(toy => (
+          (toy.id || toy.idIgracka) === updated.igracka.id
+            ? { ...toy, status: updated.igracka.status, primatelj: updated.igracka.primatelj }
+            : toy
+        )));
+      }
+      alert("Zahtjev je odobren");
+    } catch (err) {
+      alert("Greška pri odobravanju zahtjeva: " + err.message);
+    } finally {
+      setApproving(null);
+    }
+  };
+
   if (loading) return <p className="p-6">Učitavanje...</p>;
 
   const dostupne = toys.filter(t => t.status === "DOSTUPNO").length;
   const rezervirane = toys.filter(t => t.status === "REZERVIRANO").length;
+  const pendingRequests = requests.filter(r => r.status === "PENDING").length;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -59,7 +94,7 @@ export default function DonatorDashboard() {
       )}
 
       {/* Statistika */}
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
+      <div className="grid md:grid-cols-4 gap-4 mb-6">
         <div className="border rounded p-4">
           <p className="text-gray-600 text-sm">Ukupno donacija</p>
           <p className="text-2xl font-bold">{toys.length}</p>
@@ -72,6 +107,47 @@ export default function DonatorDashboard() {
           <p className="text-gray-600 text-sm">Rezervirane</p>
           <p className="text-2xl font-bold text-blue-600">{rezervirane}</p>
         </div>
+        <div className="border rounded p-4">
+          <p className="text-gray-600 text-sm">Zahtjevi na čekanju</p>
+          <p className="text-2xl font-bold text-orange-600">{pendingRequests}</p>
+        </div>
+      </div>
+
+      {/* Zahtjevi */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Zahtjevi za moje igračke</h2>
+        {requests.length === 0 ? (
+          <p className="text-gray-600">Trenutno nema zahtjeva.</p>
+        ) : (
+          <div className="space-y-4">
+            {requests.map(request => (
+              <div key={request.id} className="border rounded-lg p-4 shadow">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{request.igracka?.naziv || "Igračka"}</p>
+                    <p className="text-sm text-gray-600">
+                      Primatelj: {request.primatelj?.korisnik?.email || "Nepoznato"}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Status: {request.status}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    {request.status === "PENDING" && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(request.id)}
+                        disabled={approving === request.id}
+                      >
+                        {approving === request.id ? "Odobravam..." : "Odobri"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {toys.length === 0 ? (
