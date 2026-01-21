@@ -83,12 +83,8 @@ public class ZahtjevService {
             throw new RuntimeException("Za ovu igračku već postoji aktivan zahtjev.");
         }
 
-        igracka.setStatus(StatusIgracke.REZERVIRANO);
-        igracka.setPrimatelj(primatelj);
-        igrackaRepo.save(igracka);
-
         Zahtjev zahtjev = new Zahtjev();
-        zahtjev.setStatus(StatusZahtjeva.APPROVED);
+        zahtjev.setStatus(StatusZahtjeva.PENDING);
         zahtjev.setDatumZahtjeva(LocalDateTime.now());
         zahtjev.setNapomena(req.napomena == null ? null : req.napomena.trim());
         zahtjev.setIgracka(igracka);
@@ -164,6 +160,40 @@ public class ZahtjevService {
         }
 
         zahtjev.setStatus(StatusZahtjeva.COMPLETED);
+        return zahtjevRepo.save(zahtjev);
+    }
+
+    @Transactional
+    public Zahtjev approveForCurrentDonator(Long zahtjevId) {
+        if (zahtjevId == null || zahtjevId <= 0) {
+            throw new RuntimeException("ID zahtjeva nije validan.");
+        }
+
+        Donator donator = currentDonatorOrThrow();
+        Zahtjev zahtjev = zahtjevRepo.findById(zahtjevId)
+                .orElseThrow(() -> new RuntimeException("Zahtjev ne postoji."));
+
+        if (!zahtjev.getDonator().getId().equals(donator.getId())) {
+            throw new RuntimeException("Nemate pravo odobriti ovaj zahtjev.");
+        }
+
+        if (zahtjev.getStatus() != StatusZahtjeva.PENDING) {
+            throw new RuntimeException("Samo zahtjevi na čekanju mogu biti odobreni.");
+        }
+
+        Igracka igracka = zahtjev.getIgracka();
+        if (igracka == null) {
+            throw new RuntimeException("Zahtjev nema pridruženu igračku.");
+        }
+        if (igracka.getStatus() != StatusIgracke.DOSTUPNO) {
+            throw new RuntimeException("Igračka više nije dostupna.");
+        }
+
+        zahtjev.setStatus(StatusZahtjeva.APPROVED);
+        igracka.setStatus(StatusIgracke.REZERVIRANO);
+        igracka.setPrimatelj(zahtjev.getPrimatelj());
+        igrackaRepo.save(igracka);
+
         return zahtjevRepo.save(zahtjev);
     }
 

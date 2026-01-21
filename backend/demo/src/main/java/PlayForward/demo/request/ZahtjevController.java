@@ -26,6 +26,11 @@ public class ZahtjevController {
         return ResponseEntity.ok(zahtjevService.listForCurrentPrimatelj());
     }
 
+    @GetMapping("/donator")
+    public ResponseEntity<List<Zahtjev>> listForCurrentDonator() {
+        return ResponseEntity.ok(zahtjevService.listForCurrentDonator());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Zahtjev> getById(@PathVariable Long id) {
         return ResponseEntity.ok(zahtjevService.getForCurrentPrimatelj(id));
@@ -39,5 +44,10 @@ public class ZahtjevController {
     @PostMapping("/{id}/preuzeto")
     public ResponseEntity<Zahtjev> markCompleted(@PathVariable Long id) {
         return ResponseEntity.ok(zahtjevService.markCompleted(id));
+    }
+
+    @PostMapping("/{id}/odobri")
+    public ResponseEntity<Zahtjev> approve(@PathVariable Long id) {
+        return ResponseEntity.ok(zahtjevService.approveForCurrentDonator(id));
     }
 }
