@@ -6,7 +6,8 @@ import { api } from "../lib/api";
 export async function getConversations() {
   try {
     const response = await api("/poruke/razgovori");
-    return response.data || [];
+    if (!response.ok) throw new Error("Greška pri dohvaćanju razgovora");
+    return await response.json() || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju razgovora:", err);
     throw err;
@@ -21,7 +22,8 @@ export async function getMessages(conversationId, limit = 50, offset = 0) {
 
   try {
     const response = await api(`/poruke/razgovori/${conversationId}?limit=${limit}&offset=${offset}`);
-    return response.data || [];
+    if (!response.ok) throw new Error("Greška pri dohvaćanju poruka");
+    return await response.json() || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju poruka:", err);
     throw err;
@@ -39,10 +41,11 @@ export async function sendMessage(conversationId, text) {
   try {
     const response = await api(`/poruke/razgovori/${conversationId}`, {
       method: "POST",
-      data: { tekst: text },
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tekst: text }),
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri slanju poruke");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri slanju poruke:", err);
     throw err;
@@ -58,10 +61,11 @@ export async function startConversation(otherUserId) {
   try {
     const response = await api("/poruke/razgovori", {
       method: "POST",
-      data: { drugKorisnikId: otherUserId },
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ drugKorisnikId: otherUserId }),
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri kreiranju razgovora");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri kreiranju razgovora:", err);
     throw err;
@@ -78,8 +82,8 @@ export async function markConversationAsRead(conversationId) {
     const response = await api(`/poruke/razgovori/${conversationId}/procitano`, {
       method: "POST",
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri označavanju razgovora");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri označavanju razgovora:", err);
     throw err;
@@ -96,8 +100,8 @@ export async function deleteConversation(conversationId) {
     const response = await api(`/poruke/razgovori/${conversationId}`, {
       method: "DELETE",
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri brisanju razgovora");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri brisanju razgovora:", err);
     throw err;

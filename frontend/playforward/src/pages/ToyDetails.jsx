@@ -31,18 +31,100 @@ export default function ToyDetails() {
     fetchToy();
   }, [id]);
 
-  if (loading) return <p className="p-6">Učitavanje...</p>;
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
-  if (!toy) return <p className="p-6">Nema igračke</p>;
+  if (loading) return <p className="p-6 text-center">Učitavanje...</p>;
+  if (error) return <p className="p-6 text-red-500 text-center">{error}</p>;
+  if (!toy) return <p className="p-6 text-center">Nema igračke</p>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <img src={toy.fotografija} className="w-full max-h-96 object-cover" />
-      <h1 className="text-2xl font-bold mt-4">{toy.naziv}</h1>
-      <Button className="mt-4" onClick={() => addToCart(toy)}>
-        Dodaj u košaricu
-      </Button>
-      <Link to="/igracke">← Nazad</Link>
+      {/* Slika */}
+      <div className="mb-6">
+        <img 
+          src={toy.fotografija} 
+          alt={toy.naziv}
+          className="w-full max-h-96 object-cover rounded-lg shadow-md" 
+        />
+      </div>
+
+      {/* Osnovne informacije */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">{toy.naziv}</h1>
+        
+        <div className="flex gap-4 mb-4">
+          <span className={`px-3 py-1 rounded text-sm font-semibold ${
+            toy.status === "dostupno" ? "bg-green-100 text-green-800" : 
+            toy.status === "rezervirano" ? "bg-yellow-100 text-yellow-800" : 
+            "bg-gray-100 text-gray-800"
+          }`}>
+            {toy.status}
+          </span>
+          
+          <span className="px-3 py-1 rounded text-sm font-semibold bg-blue-100 text-blue-800">
+            {toy.kategorija}
+          </span>
+        </div>
+      </div>
+
+      {/* Detalji */}
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        <div className="border rounded-lg p-4 shadow">
+          <h2 className="text-lg font-semibold mb-4">Informacije</h2>
+          
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-600">Stanje</p>
+              <p className="font-medium">{toy.stanje}</p>
+            </div>
+            
+            <div>
+              <p className="text-sm text-gray-600">Kategorija</p>
+              <p className="font-medium">{toy.kategorija}</p>
+            </div>
+            
+            <div>
+              <p className="text-sm text-gray-600">Godinu proizvodnje</p>
+              <p className="font-medium">{toy.godinaProizvodnje || "Nepoznato"}</p>
+            </div>
+
+            {toy.donator && (
+              <div>
+                <p className="text-sm text-gray-600">Darivač</p>
+                <p className="font-medium">{toy.donator.email}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Opis */}
+        <div className="border rounded-lg p-4 shadow">
+          <h2 className="text-lg font-semibold mb-4">Opis</h2>
+          <p className="text-gray-700">
+            {toy.opis || "Nema dostupnog opisa za ovu igračku."}
+          </p>
+        </div>
+      </div>
+
+      {/* Akcije */}
+      <div className="flex gap-4 mb-4">
+        <Button 
+          className="flex-1 bg-green-600 hover:bg-green-700"
+          onClick={() => addToCart(toy)}
+          disabled={toy.status === "rezervirano"}
+        >
+          {toy.status === "rezervirano" ? "Rezervirano" : "Dodaj u košaricu"}
+        </Button>
+        
+        <Button variant="outline" asChild className="flex-1">
+          <Link to="/igracke">← Nazad na igračke</Link>
+        </Button>
+      </div>
+
+      {/* Info */}
+      {toy.status === "rezervirano" && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded">
+          Ova igračka je već rezervirana. Provjerite druge dostupne igračke.
+        </div>
+      )}
     </div>
   );
 }

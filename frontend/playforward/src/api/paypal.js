@@ -11,14 +11,15 @@ export async function createPayPalPayment(amount, description, requestId) {
   try {
     const response = await api("/plaćanja/paypal/kreiraj", {
       method: "POST",
-      data: {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         iznos: amount,
         opis: description,
         zahtjevId: requestId,
-      },
+      }),
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri kreiranju PayPal plaćanja");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri kreiranju PayPal plaćanja:", err);
     throw err;
@@ -36,13 +37,14 @@ export async function executePayPalPayment(paymentId, payerId) {
   try {
     const response = await api("/plaćanja/paypal/potvrdi", {
       method: "POST",
-      data: {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         paymentId,
         payerId,
-      },
+      }),
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri potvrdi PayPal plaćanja");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri potvrdi PayPal plaćanja:", err);
     throw err;
@@ -59,8 +61,8 @@ export async function cancelPayPalPayment(paymentId) {
     const response = await api(`/plaćanja/paypal/${paymentId}/otkaži`, {
       method: "POST",
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri otkazivanju PayPal plaćanja");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri otkazivanju PayPal plaćanja:", err);
     throw err;
@@ -75,7 +77,8 @@ export async function getPaymentStatus(paymentId) {
 
   try {
     const response = await api(`/plaćanja/${paymentId}/status`);
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri dohvaćanju statusa plaćanja");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri dohvaćanju statusa plaćanja:", err);
     throw err;
@@ -88,7 +91,8 @@ export async function getPaymentStatus(paymentId) {
 export async function getUserPayments() {
   try {
     const response = await api("/plaćanja/moja");
-    return response.data || [];
+    if (!response.ok) throw new Error("Greška pri dohvaćanju plaćanja");
+    return await response.json() || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju plaćanja:", err);
     throw err;

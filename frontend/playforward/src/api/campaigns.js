@@ -6,7 +6,8 @@ import { api } from "../lib/api";
 export async function getCampaigns() {
   try {
     const response = await api("/kampanje");
-    return response.data || [];
+    if (!response.ok) throw new Error("Greška pri dohvaćanju kampanja");
+    return await response.json() || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju kampanja:", err);
     throw err;
@@ -21,7 +22,8 @@ export async function getCampaignDetails(campaignId) {
   
   try {
     const response = await api(`/kampanje/${campaignId}`);
-    return response.data || null;
+    if (!response.ok) throw new Error("Greška pri dohvaćanju kampanje");
+    return await response.json() || null;
   } catch (err) {
     console.error("Greška pri dohvaćanju kampanje:", err);
     throw err;
@@ -40,8 +42,8 @@ export async function requestToyFromCampaign(campaignId, toyId) {
     const response = await api(`/kampanje/${campaignId}/igracke/${toyId}/zahtjev`, {
       method: "POST"
     });
-
-    return response.data;
+    if (!response.ok) throw new Error("Greška pri slanju zahtjeva");
+    return await response.json();
   } catch (err) {
     console.error("Greška pri slanju zahtjeva:", err);
     throw err;

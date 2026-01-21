@@ -23,7 +23,9 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         const response = await api("/korisnici/profil");
-        setProfileData(response.data);
+        if (!response.ok) throw new Error("Greška pri dohvaćanju profila");
+        const data = await response.json();
+        setProfileData(data);
         setError(null);
       } catch (err) {
         console.error("Greška pri dohvaćanju profila:", err);
@@ -43,13 +45,14 @@ export default function ProfilePage() {
       setSwitching(true);
       const response = await api("/korisnici/promijeni-ulogu", {
         method: "POST",
-        data: { uloga: newRole },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uloga: newRole }),
       });
 
-      if (response.status === 200) {
-        setProfileData(response.data);
-        alert(`Sada ste ${newRole === "DONATOR" ? "donator" : "primatelj"}! ✅`);
-      }
+      if (!response.ok) throw new Error("Greška pri promeni uloge");
+      const data = await response.json();
+      setProfileData(data);
+      alert(`Sada ste ${newRole === "DONATOR" ? "donator" : "primatelj"}! ✅`);
     } catch (err) {
       alert("Greška pri promeni uloge: " + err.message);
     } finally {
