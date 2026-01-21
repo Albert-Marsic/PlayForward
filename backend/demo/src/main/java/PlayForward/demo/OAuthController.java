@@ -74,6 +74,13 @@ public class OAuthController {
         if (isAdmin) {
             body.put("role", "ADMIN");
             body.put("uloga", "ADMIN");
+        } else {
+            // Ako nije admin, dodaj donator/recipient ulogu
+            String userRole = resolveRole(korisnik.getId());
+            if (userRole != null && !"CONFLICT".equals(userRole)) {
+                body.put("role", userRole);
+                body.put("uloga", userRole);
+            }
         }
 
         return ResponseEntity.ok(body);

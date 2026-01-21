@@ -66,12 +66,16 @@ export default function Navbar() {
                 <Button variant="ghost" asChild>
                   <Link to="/kampanje">Kampanje</Link>
                 </Button>
-                <Button variant="ghost" asChild>
-                  <Link to="/moje-donacije">Moje donacije</Link>
-                </Button>
-                <Button variant="ghost" asChild>
-                  <Link to="/moji-zahtjevi">Moji zahtjevi</Link>
-                </Button>
+                {user.role === "DONATOR" && (
+                  <Button variant="ghost" asChild>
+                    <Link to="/moje-donacije">Moje donacije</Link>
+                  </Button>
+                )}
+                {user.role === "RECIPIENT" && (
+                  <Button variant="ghost" asChild>
+                    <Link to="/moji-zahtjevi">Moji zahtjevi</Link>
+                  </Button>
+                )}
                 <Button variant="ghost" asChild>
                   <Link to="/dashboard">Dashboard</Link>
                 </Button>

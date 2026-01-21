@@ -85,7 +85,12 @@ export default function DonatorDashboard() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Moje donacije</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Moje donacije</h1>
+        <Button asChild>
+          <Link to="/doniraj">+ Doniraj novu igračku</Link>
+        </Button>
+      </div>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
