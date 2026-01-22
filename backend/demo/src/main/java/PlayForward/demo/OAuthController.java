@@ -71,10 +71,9 @@ public class OAuthController {
 
         boolean isAdmin = adminService.isAdminEmail(email);
         body.put("admin", isAdmin);
-        if (isAdmin) {
-            body.put("role", "ADMIN");
-            body.put("uloga", "ADMIN");
-        }
+        String role = resolveRole(korisnik.getId());
+        if (isAdmin) role = "ADMIN";
+        body.put("role", role);
 
         return ResponseEntity.ok(body);
     }
