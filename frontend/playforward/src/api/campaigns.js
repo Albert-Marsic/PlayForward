@@ -92,14 +92,17 @@ export async function saveCampaignToyList(campaignId, items) {
 /**
  * Pošalji zahtjev za igračku iz kampanje
  */
-export async function requestToyFromCampaign(campaignId, toyId) {
+export async function requestToyFromCampaign(campaignId, toyId, kolicina = 1) {
   if (!campaignId || !toyId) {
     throw new Error("ID kampanje i igračke su obavezni");
   }
 
   try {
     const safeId = encodeURIComponent(toyId);
-    const response = await api(`/kampanje/${campaignId}/igracke/${safeId}/zahtjev`, {
+    const parsed = Number(kolicina);
+    const amount = Number.isFinite(parsed) ? parsed : 1;
+    const query = amount && amount !== 1 ? `?kolicina=${encodeURIComponent(amount)}` : "";
+    const response = await api(`/kampanje/${campaignId}/igracke/${safeId}/zahtjev${query}`, {
       method: "POST"
     });
     return await parseResponse(response);
@@ -115,9 +118,13 @@ export async function requestToyFromCampaign(campaignId, toyId) {
 export function calculateCompletionPercentage(kampanja) {
   if (!kampanja || !kampanja.popisi || kampanja.popisi.length === 0) return 0;
   
-  const total = kampanja.popisi.reduce((sum, popis) => sum + popis.kolicina, 0);
+  const total = kampanja.popisi.reduce((sum, popis) => sum + (popis.kolicina || 0), 0);
   const completed = kampanja.popisi.reduce((sum, popis) => {
-    return sum + (popis.status === "DONIRANO" ? popis.kolicina : 0);
+    if (typeof popis.doniranoKolicina === "number") {
+      const capped = Math.min(popis.doniranoKolicina, popis.kolicina || 0);
+      return sum + Math.max(capped, 0);
+    }
+    return sum + (popis.status === "DONIRANO" ? (popis.kolicina || 0) : 0);
   }, 0);
   
   return total > 0 ? Math.round((completed / total) * 100) : 0;

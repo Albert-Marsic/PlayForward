@@ -23,6 +23,9 @@ public class PopisIgracaka {
     @Column(name = "kolicina", nullable = false)
     private Integer kolicina;
 
+    @Column(name = "doniranokolicina", nullable = false)
+    private Integer doniranoKolicina = 0;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", columnDefinition = "status_popisa_igracaka", nullable = false)
@@ -39,6 +42,9 @@ public class PopisIgracaka {
     public Integer getKolicina() {
         return kolicina;
     }
+    public Integer getDoniranoKolicina() {
+        return doniranoKolicina;
+    }
     public StatusPopisa getStatus() {
         return status;
     }
@@ -50,6 +56,9 @@ public class PopisIgracaka {
     }
     public void setKolicina(Integer kolicina) {
         this.kolicina = kolicina;
+    }
+    public void setDoniranoKolicina(Integer doniranoKolicina) {
+        this.doniranoKolicina = doniranoKolicina;
     }
     public void setStatus(StatusPopisa status) {
         this.status = status;

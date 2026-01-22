@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS KAMPANJA (
 CREATE TABLE IF NOT EXISTS POPIS_IGRACAKA (
     nazivIgracke VARCHAR(20) NOT NULL,
     kolicina INT NOT NULL,
+    doniranoKolicina INT NOT NULL DEFAULT 0,
     status status_popisa_igracaka NOT NULL,
     IDKampanja INT NOT NULL,
     PRIMARY KEY (nazivIgracke, IDKampanja),
