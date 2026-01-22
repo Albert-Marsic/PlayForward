@@ -3,11 +3,15 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getCampaigns, calculateCompletionPercentage } from "@/api/campaigns";
 import { Calendar } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 
 export default function CampaignsPage() {
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
     const fetchCampaigns = async () => {
@@ -28,6 +32,33 @@ export default function CampaignsPage() {
     fetchCampaigns();
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      setRole(null);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchRole = async () => {
+      try {
+        const response = await api("/auth/role");
+        if (!response.ok) {
+          if (isMounted) setRole(null);
+          return;
+        }
+        const data = await response.json();
+        if (isMounted) setRole(data?.role ?? null);
+      } catch (err) {
+        if (isMounted) setRole(null);
+      }
+    };
+
+    fetchRole();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
   const isActive = (campaign) => {
     if (campaign.status) return campaign.status === "AKTIVNA";
     const today = new Date();
@@ -39,6 +70,7 @@ export default function CampaignsPage() {
 
   const activeCampaigns = campaigns.filter(isActive);
   const completedCampaigns = campaigns.filter(c => !isActive(c));
+  const canCreate = role === "RECIPIENT";
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -48,10 +80,17 @@ export default function CampaignsPage() {
           <p className="text-sm text-gray-600">
             Pregledajte aktivne kampanje ili pokrenite novu akciju.
           </p>
+          {user && !canCreate && (
+            <p className="text-xs text-gray-500 mt-1">
+              Samo udruge mogu kreirati kampanje.
+            </p>
+          )}
         </div>
-        <Button asChild variant="outline">
-          <Link to="/kampanje/novo">Kreiraj kampanju</Link>
-        </Button>
+        {canCreate && (
+          <Button asChild variant="outline">
+            <Link to="/kampanje/novo">Kreiraj kampanju</Link>
+          </Button>
+        )}
       </div>
 
       {error && (

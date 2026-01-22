@@ -12,8 +12,10 @@ import PlayForward.demo.user.KorisnikRepository;
 import PlayForward.demo.user.Primatelj;
 import PlayForward.demo.user.PrimateljRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,6 +25,10 @@ import java.util.Set;
 
 @Service
 public class KampanjaService {
+
+    private static final int MAX_NAZIV_LENGTH = 100;
+    private static final int MAX_OPIS_LENGTH = 500;
+    private static final int MAX_IGRACKA_NAZIV_LENGTH = 20;
 
     private final KampanjaRepository kampanjaRepository;
     private final PopisIgracakaRepository popisRepository;
@@ -52,21 +58,30 @@ public class KampanjaService {
     private Primatelj currentPrimateljOrThrow() {
         Long id = currentKorisnikId();
         return primateljRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nemate PRIMATELJ ulogu."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate PRIMATELJ ulogu."));
     }
 
     private Donator currentDonatorOrThrow() {
         Long id = currentKorisnikId();
         return donatorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nemate DONATOR ulogu."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate DONATOR ulogu."));
     }
 
     private Kampanja requireCampaign(Long kampanjaId) {
         if (kampanjaId == null || kampanjaId <= 0) {
-            throw new RuntimeException("ID kampanje nije validan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID kampanje nije validan.");
         }
         return kampanjaRepository.findById(kampanjaId)
-                .orElseThrow(() -> new RuntimeException("Kampanja ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kampanja ne postoji."));
+    }
+
+    private void validateMaxLength(String value, int maxLength, String fieldName) {
+        if (value.length() > maxLength) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    fieldName + " ne smije biti dulji od " + maxLength + " znakova."
+            );
+        }
     }
 
     private boolean isActive(Kampanja kampanja) {
@@ -96,23 +111,25 @@ public class KampanjaService {
     @Transactional
     public KampanjaView create(CreateKampanjaRequest req) {
         if (req == null) {
-            throw new RuntimeException("Podaci nedostaju.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Podaci nedostaju.");
         }
 
         String naziv = req.naziv == null ? "" : req.naziv.trim();
         String opis = req.opis == null ? "" : req.opis.trim();
 
         if (naziv.isBlank()) {
-            throw new RuntimeException("Naziv je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Naziv je obavezan.");
         }
         if (opis.isBlank()) {
-            throw new RuntimeException("Opis je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Opis je obavezan.");
         }
+        validateMaxLength(naziv, MAX_NAZIV_LENGTH, "Naziv");
+        validateMaxLength(opis, MAX_OPIS_LENGTH, "Opis");
         if (req.rokTrajanja == null) {
-            throw new RuntimeException("Rok trajanja je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rok trajanja je obavezan.");
         }
         if (req.rokTrajanja.isBefore(LocalDate.now())) {
-            throw new RuntimeException("Rok trajanja ne može biti u prošlosti.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rok trajanja ne može biti u prošlosti.");
         }
 
         Primatelj primatelj = currentPrimateljOrThrow();
@@ -142,11 +159,11 @@ public class KampanjaService {
 
         if (kampanja.getPrimatelj() == null || kampanja.getPrimatelj().getId() == null
                 || !kampanja.getPrimatelj().getId().equals(primatelj.getId())) {
-            throw new RuntimeException("Nemate pravo uređivati ovu kampanju.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo uređivati ovu kampanju.");
         }
 
         if (items == null || items.isEmpty()) {
-            throw new RuntimeException("Popis igračaka je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Popis igračaka je obavezan.");
         }
 
         List<PopisIgracaka> toSave = new ArrayList<>(items.size());
@@ -158,14 +175,15 @@ public class KampanjaService {
             }
             String naziv = item.nazivIgracke == null ? "" : item.nazivIgracke.trim();
             if (naziv.isBlank()) {
-                throw new RuntimeException("Naziv igračke je obavezan.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Naziv igračke je obavezan.");
             }
+            validateMaxLength(naziv, MAX_IGRACKA_NAZIV_LENGTH, "Naziv igračke");
             if (item.kolicina == null || item.kolicina <= 0) {
-                throw new RuntimeException("Količina mora biti veća od 0.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Količina mora biti veća od 0.");
             }
             String key = naziv.toLowerCase();
             if (!seenNames.add(key)) {
-                throw new RuntimeException("Duplicirana igračka: " + naziv);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duplicirana igračka: " + naziv);
             }
 
             PopisIgracaka popis = new PopisIgracaka();
@@ -173,12 +191,13 @@ public class KampanjaService {
             popis.setId(id);
             popis.setKampanja(kampanja);
             popis.setKolicina(item.kolicina);
+            popis.setDoniranoKolicina(0);
             popis.setStatus(StatusPopisa.POTREBNO);
             toSave.add(popis);
         }
 
         if (toSave.isEmpty()) {
-            throw new RuntimeException("Popis igračaka je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Popis igračaka je obavezan.");
         }
 
         popisRepository.deleteByKampanja_Id(kampanjaId);
@@ -188,26 +207,51 @@ public class KampanjaService {
     }
 
     @Transactional
-    public PopisIgracakaView markDonated(Long kampanjaId, String nazivIgracke) {
+    public PopisIgracakaView markDonated(Long kampanjaId, String nazivIgracke, Integer kolicina) {
         currentDonatorOrThrow();
         Kampanja kampanja = requireCampaign(kampanjaId);
         if (!isActive(kampanja)) {
-            throw new RuntimeException("Kampanja je završena.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kampanja je završena.");
         }
 
         String naziv = nazivIgracke == null ? "" : nazivIgracke.trim();
         if (naziv.isBlank()) {
-            throw new RuntimeException("Naziv igračke je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Naziv igračke je obavezan.");
         }
+        validateMaxLength(naziv, MAX_IGRACKA_NAZIV_LENGTH, "Naziv igračke");
 
         PopisIgracakaId id = new PopisIgracakaId(naziv, kampanja.getId());
         PopisIgracaka popis = popisRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Igračka nije pronađena u kampanji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Igračka nije pronađena u kampanji."));
 
-        if (popis.getStatus() != StatusPopisa.DONIRANO) {
-            popis.setStatus(StatusPopisa.DONIRANO);
-            popis = popisRepository.save(popis);
+        int amount = (kolicina == null) ? 1 : kolicina;
+        if (amount <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Količina mora biti veća od 0.");
         }
+
+        int required = popis.getKolicina() == null ? 0 : popis.getKolicina();
+        if (required <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Količina stavke nije validna.");
+        }
+
+        int current = popis.getDoniranoKolicina() == null ? 0 : popis.getDoniranoKolicina();
+        int remaining = required - current;
+        if (remaining <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Igračka je već prikupljena.");
+        }
+        if (amount > remaining) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Preostala količina je " + remaining + ".");
+        }
+
+        int updated = current + amount;
+        popis.setDoniranoKolicina(updated);
+        if (updated >= required) {
+            popis.setStatus(StatusPopisa.DONIRANO);
+        } else {
+            popis.setStatus(StatusPopisa.POTREBNO);
+        }
+
+        popis = popisRepository.save(popis);
 
         return toPopisView(popis);
     }
@@ -254,6 +298,7 @@ public class KampanjaService {
             view.nazivIgracke = popis.getId().getNazivIgracke();
         }
         view.kolicina = popis.getKolicina();
+        view.doniranoKolicina = popis.getDoniranoKolicina();
         view.status = popis.getStatus();
         return view;
     }
@@ -266,9 +311,16 @@ public class KampanjaService {
         int donated = 0;
         for (PopisIgracaka popis : popisi) {
             if (popis.getKolicina() != null) {
-                total += popis.getKolicina();
-                if (popis.getStatus() == StatusPopisa.DONIRANO) {
-                    donated += popis.getKolicina();
+                int required = popis.getKolicina();
+                total += required;
+                Integer donatedValue = popis.getDoniranoKolicina();
+                if (donatedValue != null) {
+                    int capped = Math.min(donatedValue, required);
+                    if (capped > 0) {
+                        donated += capped;
+                    }
+                } else if (popis.getStatus() == StatusPopisa.DONIRANO) {
+                    donated += required;
                 }
             }
         }

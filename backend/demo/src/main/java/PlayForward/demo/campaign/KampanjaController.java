@@ -47,7 +47,8 @@ public class KampanjaController {
 
     @PostMapping("/{id}/igracke/{nazivIgracke}/zahtjev")
     public ResponseEntity<PopisIgracakaView> markDonated(@PathVariable Long id,
-                                                         @PathVariable String nazivIgracke) {
-        return ResponseEntity.ok(kampanjaService.markDonated(id, nazivIgracke));
+                                                         @PathVariable String nazivIgracke,
+                                                         @RequestParam(required = false) Integer kolicina) {
+        return ResponseEntity.ok(kampanjaService.markDonated(id, nazivIgracke, kolicina));
     }
 }

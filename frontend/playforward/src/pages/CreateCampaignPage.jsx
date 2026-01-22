@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createCampaign, saveCampaignToyList } from "@/api/campaigns";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 
 export default function CreateCampaignPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const today = new Date().toISOString().split("T")[0];
   const [naziv, setNaziv] = useState("");
   const [opis, setOpis] = useState("");
@@ -13,6 +16,39 @@ export default function CreateCampaignPage() {
   const [items, setItems] = useState([{ nazivIgracke: "", kolicina: 1 }]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [role, setRole] = useState(null);
+  const [roleLoading, setRoleLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setRole(null);
+      setRoleLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchRole = async () => {
+      setRoleLoading(true);
+      try {
+        const response = await api("/auth/role");
+        if (!response.ok) {
+          if (isMounted) setRole(null);
+          return;
+        }
+        const data = await response.json();
+        if (isMounted) setRole(data?.role ?? null);
+      } catch (err) {
+        if (isMounted) setRole(null);
+      } finally {
+        if (isMounted) setRoleLoading(false);
+      }
+    };
+
+    fetchRole();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   const handleItemChange = (index, field, value) => {
     setItems(prev => prev.map((item, i) => (
@@ -73,6 +109,38 @@ export default function CreateCampaignPage() {
       setLoading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto text-center space-y-4">
+        <h1 className="text-2xl font-bold">Prijava je potrebna</h1>
+        <p className="text-gray-600">
+          Za kreiranje kampanje potrebno je prijaviti se kao udruga.
+        </p>
+        <Button asChild>
+          <Link to="/prijava">Prijava</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (roleLoading) {
+    return <p className="p-6">Učitavanje...</p>;
+  }
+
+  if (role !== "RECIPIENT") {
+    return (
+      <div className="p-6 max-w-3xl mx-auto text-center space-y-4">
+        <h1 className="text-2xl font-bold">Nedovoljna prava</h1>
+        <p className="text-gray-600">
+          Samo udruge (primatelji) mogu kreirati kampanje.
+        </p>
+        <Button asChild variant="outline">
+          <Link to="/kampanje">Nazad na kampanje</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
