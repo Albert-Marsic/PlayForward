@@ -145,6 +145,8 @@ public class AdminUserService {
         for (Kampanja kampanja : slice) {
             AdminCampaignView view = new AdminCampaignView();
             view.id = kampanja.getId();
+            view.naziv = kampanja.getNaziv();
+            view.opis = kampanja.getOpis();
             view.napredak = kampanja.getNapredak();
             view.rokTrajanja = kampanja.getRokTrajanja();
 

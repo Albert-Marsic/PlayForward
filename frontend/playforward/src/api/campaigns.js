@@ -1,13 +1,36 @@
 import { api } from "../lib/api";
 
+async function parseResponse(response) {
+  const text = await response.text();
+  let payload = null;
+
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = text;
+    }
+  }
+
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === "object"
+        ? payload.message || payload.error
+        : payload;
+    throw new Error(message || `HTTP ${response.status}`);
+  }
+
+  return payload;
+}
+
 /**
  * Dohvati sve kampanje
  */
 export async function getCampaigns() {
   try {
     const response = await api("/kampanje");
-    if (!response.ok) throw new Error("Greška pri dohvaćanju kampanja");
-    return await response.json() || [];
+    const data = await parseResponse(response);
+    return data || [];
   } catch (err) {
     console.error("Greška pri dohvaćanju kampanja:", err);
     throw err;
@@ -22,10 +45,46 @@ export async function getCampaignDetails(campaignId) {
   
   try {
     const response = await api(`/kampanje/${campaignId}`);
-    if (!response.ok) throw new Error("Greška pri dohvaćanju kampanje");
-    return await response.json() || null;
+    const data = await parseResponse(response);
+    return data || null;
   } catch (err) {
     console.error("Greška pri dohvaćanju kampanje:", err);
+    throw err;
+  }
+}
+
+/**
+ * Kreiraj novu kampanju
+ */
+export async function createCampaign(payload) {
+  try {
+    const response = await api("/kampanje", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {})
+    });
+    return await parseResponse(response);
+  } catch (err) {
+    console.error("Greška pri kreiranju kampanje:", err);
+    throw err;
+  }
+}
+
+/**
+ * Spremi popis igračaka za kampanju
+ */
+export async function saveCampaignToyList(campaignId, items) {
+  if (!campaignId) throw new Error("ID kampanje je obavezan");
+
+  try {
+    const response = await api(`/kampanje/${campaignId}/popis`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(items || [])
+    });
+    return await parseResponse(response);
+  } catch (err) {
+    console.error("Greška pri spremanju popisa igračaka:", err);
     throw err;
   }
 }
@@ -39,11 +98,11 @@ export async function requestToyFromCampaign(campaignId, toyId) {
   }
 
   try {
-    const response = await api(`/kampanje/${campaignId}/igracke/${toyId}/zahtjev`, {
+    const safeId = encodeURIComponent(toyId);
+    const response = await api(`/kampanje/${campaignId}/igracke/${safeId}/zahtjev`, {
       method: "POST"
     });
-    if (!response.ok) throw new Error("Greška pri slanju zahtjeva");
-    return await response.json();
+    return await parseResponse(response);
   } catch (err) {
     console.error("Greška pri slanju zahtjeva:", err);
     throw err;
@@ -58,7 +117,7 @@ export function calculateCompletionPercentage(kampanja) {
   
   const total = kampanja.popisi.reduce((sum, popis) => sum + popis.kolicina, 0);
   const completed = kampanja.popisi.reduce((sum, popis) => {
-    return sum + (popis.status === "PRIKUPLJENO" ? popis.kolicina : 0);
+    return sum + (popis.status === "DONIRANO" ? popis.kolicina : 0);
   }, 0);
   
   return total > 0 ? Math.round((completed / total) * 100) : 0;

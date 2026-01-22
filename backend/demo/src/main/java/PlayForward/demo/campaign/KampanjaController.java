@@ -1,5 +1,9 @@
 package PlayForward.demo.campaign;
 
+import PlayForward.demo.campaign.dto.CreateKampanjaRequest;
+import PlayForward.demo.campaign.dto.KampanjaView;
+import PlayForward.demo.campaign.dto.PopisIgracakaRequest;
+import PlayForward.demo.campaign.dto.PopisIgracakaView;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,33 +20,34 @@ public class KampanjaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Kampanja>> getAllCampaigns() {
-        return ResponseEntity.ok(kampanjaService.getAllCampaigns());
+    public ResponseEntity<List<KampanjaView>> listAll() {
+        return ResponseEntity.ok(kampanjaService.listAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Kampanja> getCampaignById(@PathVariable Long id) {
-        return ResponseEntity.ok(kampanjaService.getCampaignById(id));
+    public ResponseEntity<KampanjaView> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(kampanjaService.getById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Kampanja> createCampaign(@RequestBody Kampanja kampanja) {
-        return ResponseEntity.ok(kampanjaService.createCampaign(kampanja));
+    public ResponseEntity<KampanjaView> create(@RequestBody CreateKampanjaRequest req) {
+        return ResponseEntity.ok(kampanjaService.create(req));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Kampanja> updateCampaign(@PathVariable Long id, @RequestBody Kampanja updates) {
-        return ResponseEntity.ok(kampanjaService.updateCampaign(id, updates));
+    @GetMapping("/{id}/popis")
+    public ResponseEntity<List<PopisIgracakaView>> listPopis(@PathVariable Long id) {
+        return ResponseEntity.ok(kampanjaService.listPopis(id));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCampaign(@PathVariable Long id) {
-        kampanjaService.deleteCampaign(id);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/{id}/popis")
+    public ResponseEntity<List<PopisIgracakaView>> savePopis(@PathVariable Long id,
+                                                             @RequestBody List<PopisIgracakaRequest> items) {
+        return ResponseEntity.ok(kampanjaService.savePopis(id, items));
     }
 
-    @GetMapping("/moje")
-    public ResponseEntity<List<Kampanja>> getMyCampaigns() {
-        return ResponseEntity.ok(kampanjaService.getCampaignsByCurrentUser());
+    @PostMapping("/{id}/igracke/{nazivIgracke}/zahtjev")
+    public ResponseEntity<PopisIgracakaView> markDonated(@PathVariable Long id,
+                                                         @PathVariable String nazivIgracke) {
+        return ResponseEntity.ok(kampanjaService.markDonated(id, nazivIgracke));
     }
 }

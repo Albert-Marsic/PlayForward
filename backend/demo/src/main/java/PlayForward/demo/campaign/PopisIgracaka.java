@@ -9,6 +9,10 @@ import org.hibernate.type.SqlTypes;
 public class PopisIgracaka {
 
     @EmbeddedId
+    @AttributeOverrides({
+            @AttributeOverride(name = "nazivIgracke", column = @Column(name = "nazivigracke")),
+            @AttributeOverride(name = "idKampanja", column = @Column(name = "idkampanja"))
+    })
     private PopisIgracakaId id;
 
     @MapsId("idKampanja")
