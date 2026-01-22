@@ -3,6 +3,7 @@ package PlayForward.demo.request;
 import PlayForward.demo.listing.Igracka;
 import PlayForward.demo.listing.IgrackaRepository;
 import PlayForward.demo.listing.StatusIgracke;
+import PlayForward.demo.mail.EmailService;
 import PlayForward.demo.request.dto.CreateZahtjevRequest;
 import PlayForward.demo.security.SecurityUtil;
 import PlayForward.demo.user.Donator;
@@ -21,25 +22,28 @@ import java.util.Set;
 @Service
 public class ZahtjevService {
 
-    private static final Set<StatusZahtjeva> ACTIVE_STATUSES =
-            EnumSet.of(StatusZahtjeva.PENDING, StatusZahtjeva.APPROVED, StatusZahtjeva.COMPLETED);
+    private static final Set<StatusZahtjeva> ACTIVE_STATUSES = EnumSet.of(StatusZahtjeva.PENDING,
+            StatusZahtjeva.APPROVED, StatusZahtjeva.COMPLETED);
 
     private final ZahtjevRepository zahtjevRepo;
     private final IgrackaRepository igrackaRepo;
     private final KorisnikRepository korisnikRepo;
     private final DonatorRepository donatorRepo;
     private final PrimateljRepository primateljRepo;
+    private final EmailService emailService;
 
     public ZahtjevService(ZahtjevRepository zahtjevRepo,
-                          IgrackaRepository igrackaRepo,
-                          KorisnikRepository korisnikRepo,
-                          DonatorRepository donatorRepo,
-                          PrimateljRepository primateljRepo) {
+            IgrackaRepository igrackaRepo,
+            KorisnikRepository korisnikRepo,
+            DonatorRepository donatorRepo,
+            PrimateljRepository primateljRepo,
+            EmailService emailService) {
         this.zahtjevRepo = zahtjevRepo;
         this.igrackaRepo = igrackaRepo;
         this.korisnikRepo = korisnikRepo;
         this.donatorRepo = donatorRepo;
         this.primateljRepo = primateljRepo;
+        this.emailService = emailService;
     }
 
     private Long currentKorisnikId() {
@@ -91,7 +95,23 @@ public class ZahtjevService {
         zahtjev.setPrimatelj(primatelj);
         zahtjev.setDonator(igracka.getDonator());
 
-        return zahtjevRepo.save(zahtjev);
+        Zahtjev savedZahtjev = zahtjevRepo.save(zahtjev);
+
+        // F-008: Šalji email donatoru o novom zahtjevu
+        if (igracka.getDonator() != null
+                && igracka.getDonator().getKorisnik() != null
+                && igracka.getDonator().getKorisnik().getEmail() != null) {
+            String primateljIme = (primatelj.getKorisnik() != null && primatelj.getKorisnik().getImeKorisnik() != null)
+                    ? primatelj.getKorisnik().getImeKorisnik()
+                    : "Primatelj";
+            emailService.sendRequestNotificationAsync(
+                    igracka.getDonator().getKorisnik().getEmail(),
+                    primateljIme,
+                    igracka.getNaziv(),
+                    req.napomena);
+        }
+
+        return savedZahtjev;
     }
 
     @Transactional(readOnly = true)
@@ -142,7 +162,23 @@ public class ZahtjevService {
             igrackaRepo.save(igracka);
         }
 
-        return zahtjevRepo.save(zahtjev);
+        Zahtjev savedZahtjev = zahtjevRepo.save(zahtjev);
+
+        // F-011: Šalji email donatoru o odustajanju
+        if (zahtjev.getDonator() != null
+                && zahtjev.getDonator().getKorisnik() != null
+                && zahtjev.getDonator().getKorisnik().getEmail() != null) {
+            String primateljIme = (primatelj.getKorisnik() != null && primatelj.getKorisnik().getImeKorisnik() != null)
+                    ? primatelj.getKorisnik().getImeKorisnik()
+                    : "Primatelj";
+            String igrackaNaziv = igracka != null ? igracka.getNaziv() : "Igračka";
+            emailService.sendWithdrawalNotificationAsync(
+                    zahtjev.getDonator().getKorisnik().getEmail(),
+                    primateljIme,
+                    igrackaNaziv);
+        }
+
+        return savedZahtjev;
     }
 
     @Transactional
