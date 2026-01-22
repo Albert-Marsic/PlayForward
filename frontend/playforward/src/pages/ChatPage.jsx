@@ -32,11 +32,6 @@ export default function ChatPage() {
           <p className="text-gray-600 mb-6">
             Chat widget je aktivan na svim stranicama. Klikni na chat ikonicu u donjem desnom kutu za slanje poruka.
           </p>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-700">
-              💡 FreeChat omogućava direktnu komunikaciju između donatora i primatelja bez potrebe za custom backendom.
-            </p>
-          </div>
         </div>
       </div>
     </div>
