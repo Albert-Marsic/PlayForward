@@ -36,9 +36,9 @@ public class OAuthController {
     private final AdminService adminService;
 
     public OAuthController(KorisnikRepository korisnikRepository,
-                           DonatorRepository donatorRepository,
-                           PrimateljRepository primateljRepository,
-                           AdminService adminService) {
+            DonatorRepository donatorRepository,
+            PrimateljRepository primateljRepository,
+            AdminService adminService) {
         this.korisnikRepository = korisnikRepository;
         this.donatorRepository = donatorRepository;
         this.primateljRepository = primateljRepository;
@@ -74,13 +74,6 @@ public class OAuthController {
         if (isAdmin) {
             body.put("role", "ADMIN");
             body.put("uloga", "ADMIN");
-        } else {
-            // Ako nije admin, dodaj donator/recipient ulogu
-            String userRole = resolveRole(korisnik.getId());
-            if (userRole != null && !"CONFLICT".equals(userRole)) {
-                body.put("role", userRole);
-                body.put("uloga", userRole);
-            }
         }
 
         return ResponseEntity.ok(body);
@@ -120,7 +113,7 @@ public class OAuthController {
 
     @PostMapping("/role")
     public ResponseEntity<?> chooseRole(@AuthenticationPrincipal OAuth2User principal,
-                                        @RequestBody RoleRequest request) {
+            @RequestBody RoleRequest request) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "User is not authenticated"));
@@ -180,8 +173,8 @@ public class OAuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    Authentication authentication) {
+            HttpServletResponse response,
+            Authentication authentication) {
         // For JWT-based authentication, logout is handled on the frontend
         // by removing the token from localStorage
         // We still clear the SecurityContext for good measure

@@ -88,7 +88,7 @@ export default function DonatorDashboard() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Moje donacije</h1>
         <Button asChild>
-          <Link to="/doniraj">+ Doniraj novu igračku</Link>
+          <Link to="/doniraj">Doniraj novu igračku</Link>
         </Button>
       </div>
 

@@ -15,7 +15,8 @@ public class Donator {
     @JoinColumn(name = "iddonator")
     private Korisnik korisnik;
 
-    public Donator() {}
+    public Donator() {
+    }
 
     public Long getId() {
         return id;
