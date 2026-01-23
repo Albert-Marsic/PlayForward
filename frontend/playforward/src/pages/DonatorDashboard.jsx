@@ -99,11 +99,16 @@ export default function DonatorDashboard() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Moje donacije</h1>
-        <Button asChild>
-          <Link to="/doniraj">Doniraj novu igračku</Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" asChild>
+            <Link to="/moje-recenzije">Moje recenzije</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/doniraj">Doniraj novu igračku</Link>
+          </Button>
+        </div>
       </div>
 
       {error && (

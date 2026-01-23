@@ -48,6 +48,20 @@ export async function getReviewsForDonator(donatorId) {
 }
 
 /**
+ * Dohvati recenzije koje je trenutno prijavljeni primatelj napisao
+ */
+export async function getReviewsForPrimatelj() {
+  try {
+    const response = await api("/recenzije/primatelj/moje");
+    if (!response.ok) throw new Error("Greška pri dohvaćanju recenzija");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri dohvaćanju recenzija:", err);
+    throw err;
+  }
+}
+
+/**
  * Izračunaj prosječnu ocjenu
  */
 export function calculateAverageRating(reviews) {

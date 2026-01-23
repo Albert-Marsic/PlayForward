@@ -5,6 +5,7 @@ import PlayForward.demo.request.StatusZahtjeva;
 import PlayForward.demo.request.Zahtjev;
 import PlayForward.demo.request.ZahtjevRepository;
 import PlayForward.demo.review.dto.CreateRecenzijaRequest;
+import PlayForward.demo.review.dto.RecenzijaResponse;
 import PlayForward.demo.security.SecurityUtil;
 import PlayForward.demo.user.Donator;
 import PlayForward.demo.user.DonatorRepository;
@@ -66,7 +67,7 @@ public class RecenzijaService {
     }
 
     @Transactional
-    public Recenzija create(CreateRecenzijaRequest req) {
+    public RecenzijaResponse create(CreateRecenzijaRequest req) {
         if (req == null || req.zahtjevId == null || req.zahtjevId <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID zahtjeva je obavezan.");
         }
@@ -118,22 +119,22 @@ public class RecenzijaService {
                 : null;
         if (donorEmail == null || donorEmail.isBlank()) {
             log.warn("Email donatora nije dostupan za zahtjev {}.", zahtjev.getId());
-            return saved;
+            return RecenzijaResponse.fromEntity(saved);
         }
 
         emailService.sendReviewNotificationAsync(donorEmail, saved);
 
-        return saved;
+        return RecenzijaResponse.fromEntity(saved);
     }
 
     @Transactional(readOnly = true)
-    public List<Recenzija> listForCurrentDonator() {
+    public List<RecenzijaResponse> listForCurrentDonator() {
         Donator donator = currentDonatorOrThrow();
-        return recenzijaRepo.findByDonator_IdOrderByIdDesc(donator.getId());
+        return toResponseList(recenzijaRepo.findByDonator_IdOrderByIdDesc(donator.getId()));
     }
 
     @Transactional(readOnly = true)
-    public List<Recenzija> listForDonator(Long donatorId) {
+    public List<RecenzijaResponse> listForDonator(Long donatorId) {
         if (donatorId == null || donatorId <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID donatora je obavezan.");
         }
@@ -143,6 +144,18 @@ public class RecenzijaService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo pregledavati tuđe recenzije.");
         }
 
-        return recenzijaRepo.findByDonator_IdOrderByIdDesc(donatorId);
+        return toResponseList(recenzijaRepo.findByDonator_IdOrderByIdDesc(donatorId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<RecenzijaResponse> listForCurrentPrimatelj() {
+        Primatelj primatelj = currentPrimateljOrThrow();
+        return toResponseList(recenzijaRepo.findByPrimatelj_IdOrderByIdDesc(primatelj.getId()));
+    }
+
+    private List<RecenzijaResponse> toResponseList(List<Recenzija> recenzije) {
+        return recenzije.stream()
+                .map(RecenzijaResponse::fromEntity)
+                .toList();
     }
 }

@@ -89,9 +89,14 @@ export default function PrimateljDashboard() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Moji zahtjevi</h1>
-        <Button asChild variant="outline">
-          <Link to="/igracke">Novi zahtjev</Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline">
+            <Link to="/moje-recenzije">Moje recenzije</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/igracke">Novi zahtjev</Link>
+          </Button>
+        </div>
       </div>
 
       {error && (

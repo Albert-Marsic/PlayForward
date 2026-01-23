@@ -1,6 +1,7 @@
 package PlayForward.demo.review;
 
 import PlayForward.demo.review.dto.CreateRecenzijaRequest;
+import PlayForward.demo.review.dto.RecenzijaResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,17 +18,22 @@ public class RecenzijaController {
     }
 
     @PostMapping
-    public ResponseEntity<Recenzija> create(@RequestBody CreateRecenzijaRequest req) {
+    public ResponseEntity<RecenzijaResponse> create(@RequestBody CreateRecenzijaRequest req) {
         return ResponseEntity.ok(recenzijaService.create(req));
     }
 
     @GetMapping("/donator/{donatorId}")
-    public ResponseEntity<List<Recenzija>> listForDonator(@PathVariable Long donatorId) {
+    public ResponseEntity<List<RecenzijaResponse>> listForDonator(@PathVariable Long donatorId) {
         return ResponseEntity.ok(recenzijaService.listForDonator(donatorId));
     }
 
     @GetMapping("/moje")
-    public ResponseEntity<List<Recenzija>> listForCurrentDonator() {
+    public ResponseEntity<List<RecenzijaResponse>> listForCurrentDonator() {
         return ResponseEntity.ok(recenzijaService.listForCurrentDonator());
+    }
+
+    @GetMapping("/primatelj/moje")
+    public ResponseEntity<List<RecenzijaResponse>> listForCurrentPrimatelj() {
+        return ResponseEntity.ok(recenzijaService.listForCurrentPrimatelj());
     }
 }
