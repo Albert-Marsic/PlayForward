@@ -1,69 +1,113 @@
 import { useEffect, useRef, useState } from "react";
 import { useNotification } from "@/context/NotificationContext";
-import { executePayPalPayment } from "@/api/paypal";
+import { capturePayPalOrder, createPayPalOrder } from "@/api/paypal";
 
-export default function PayPalButton({ amount, description, requestId, onSuccess, onError }) {
+export default function PayPalButton({ requestId, onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
   const paypalContainerRef = useRef(null);
   const { addNotification } = useNotification();
 
   useEffect(() => {
-    // Provjeri da li je PayPal SDK učitan
-    if (!window.paypal) {
-      addNotification("PayPal nije dostupan", "error");
-      return;
-    }
+    let cancelled = false;
+    const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
 
-    // Renderuj PayPal gumb
-    window.paypal
-      .Buttons({
-        createOrder: (data, actions) => {
-          return actions.order.create({
-            purchase_units: [
-              {
-                amount: {
-                  value: amount.toString(),
-                  currency_code: "EUR",
-                },
-                description: description,
-              },
-            ],
-          });
-        },
+    const loadPayPalSdk = () => {
+      if (window.paypal) return Promise.resolve();
+      const existingScript = document.querySelector("script[src*='paypal.com/sdk/js']");
+      if (!existingScript) {
+        if (!paypalClientId) {
+          return Promise.reject(new Error("PayPal client ID nije postavljen"));
+        }
+        const script = document.createElement("script");
+        script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=EUR`;
+        script.async = true;
+        return new Promise((resolve, reject) => {
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("PayPal SDK se nije mogao učitati"));
+          document.body.appendChild(script);
+        });
+      }
+      return new Promise((resolve, reject) => {
+        if (window.paypal) {
+          resolve();
+          return;
+        }
+        const timeoutId = setTimeout(() => {
+          reject(new Error("PayPal SDK nije učitan na vrijeme"));
+        }, 10000);
+        existingScript.addEventListener("load", () => {
+          clearTimeout(timeoutId);
+          resolve();
+        }, { once: true });
+        existingScript.addEventListener("error", () => {
+          clearTimeout(timeoutId);
+          reject(new Error("PayPal SDK se nije mogao učitati"));
+        }, { once: true });
+      });
+    };
 
-        onApprove: async (data, actions) => {
-          try {
-            setLoading(true);
+    const renderButton = async () => {
+      if (!requestId) {
+        addNotification("Nedostaje ID zahtjeva za plaćanje", "error");
+        return;
+      }
 
-            // Detaljno o sredstvima
-            const details = await actions.order.capture();
+      try {
+        await loadPayPalSdk();
+        if (cancelled) return;
+        if (!window.paypal) {
+          throw new Error("PayPal nije dostupan");
+        }
 
-            // Pošalji na backend
-            await executePayPalPayment(details.id, data.payerID);
+        if (paypalContainerRef.current) {
+          paypalContainerRef.current.innerHTML = "";
+        }
 
-            addNotification("Plaćanje je uspješno! 🎉", "success");
-            if (onSuccess) onSuccess(details);
-          } catch (err) {
-            console.error("Greška pri obradi plaćanja:", err);
-            addNotification("Greška pri obradi plaćanja", "error");
-            if (onError) onError(err);
-          } finally {
-            setLoading(false);
-          }
-        },
+        window.paypal
+          .Buttons({
+            createOrder: async () => {
+              const order = await createPayPalOrder(requestId);
+              return order.orderId;
+            },
 
-        onError: (err) => {
-          console.error("PayPal greška:", err);
-          addNotification("PayPal greška: " + err.message, "error");
-          if (onError) onError(err);
-        },
+            onApprove: async (data) => {
+              try {
+                setLoading(true);
+                const updated = await capturePayPalOrder(requestId, data.orderID);
+                addNotification("Poštarina je uspješno plaćena! 🎉", "success");
+                if (onSuccess) onSuccess(updated);
+              } catch (err) {
+                console.error("Greška pri obradi plaćanja:", err);
+                addNotification("Greška pri obradi plaćanja", "error");
+                if (onError) onError(err);
+              } finally {
+                setLoading(false);
+              }
+            },
 
-        onCancel: () => {
-          addNotification("Plaćanje je otkazano", "warning");
-        },
-      })
-      .render(paypalContainerRef.current);
-  }, [amount, description, addNotification, onSuccess, onError]);
+            onError: (err) => {
+              console.error("PayPal greška:", err);
+              addNotification("PayPal greška: " + err.message, "error");
+              if (onError) onError(err);
+            },
+
+            onCancel: () => {
+              addNotification("Plaćanje je otkazano", "warning");
+            },
+          })
+          .render(paypalContainerRef.current);
+      } catch (err) {
+        console.error("Greška pri učitavanju PayPal SDK-a:", err);
+        addNotification(err.message || "PayPal nije dostupan", "error");
+        if (onError) onError(err);
+      }
+    };
+
+    renderButton();
+    return () => {
+      cancelled = true;
+    };
+  }, [requestId, addNotification, onSuccess, onError]);
 
   return (
     <div ref={paypalContainerRef} className="my-4">

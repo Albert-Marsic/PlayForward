@@ -76,23 +76,7 @@ export async function withdrawRequest(requestId) {
 }
 
 /**
- * Potvrdi preuzimanje zahtjeva (status -> COMPLETED)
- */
-export async function completeRequest(requestId) {
-  if (!requestId) throw new Error("ID zahtjeva je obavezan");
-
-  try {
-    const response = await api(`/zahtjevi/${requestId}/preuzeto`, { method: "POST" });
-    if (!response.ok) throw new Error("Greška pri potvrdi preuzimanja");
-    return await response.json();
-  } catch (err) {
-    console.error("Greška pri potvrdi preuzimanja:", err);
-    throw err;
-  }
-}
-
-/**
- * Donator odobrava zahtjev (status -> APPROVED)
+ * Donator odobrava zahtjev (status -> POSTAGE_PENDING)
  */
 export async function approveRequest(requestId) {
   if (!requestId) throw new Error("ID zahtjeva je obavezan");
@@ -103,6 +87,22 @@ export async function approveRequest(requestId) {
     return await response.json();
   } catch (err) {
     console.error("Greška pri odobravanju zahtjeva:", err);
+    throw err;
+  }
+}
+
+/**
+ * Donator potvrđuje preuzimanje (status -> PICKED_UP)
+ */
+export async function markPickedUpRequest(requestId) {
+  if (!requestId) throw new Error("ID zahtjeva je obavezan");
+
+  try {
+    const response = await api(`/zahtjevi/${requestId}/preuzeto`, { method: "POST" });
+    if (!response.ok) throw new Error("Greška pri potvrdi preuzimanja");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri potvrdi preuzimanja:", err);
     throw err;
   }
 }
