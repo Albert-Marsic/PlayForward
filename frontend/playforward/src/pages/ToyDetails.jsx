@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 //import fakeData from "@/data/myFakeData";
 import { getToyDetails } from "@/api/toyDetails";
 import { api } from "@/lib/api";
+import { ChatButton } from "@/components/ChatPopup";
 
 export default function ToyDetails() {
   const { id } = useParams();
@@ -155,7 +156,7 @@ export default function ToyDetails() {
       <div className="flex gap-4 mb-4">
         {user?.role === "RECIPIENT" ? (
           <>
-            <Button 
+            <Button
               className="flex-1 bg-green-600 hover:bg-green-700"
               onClick={handleSubmitRequest}
               disabled={toy.status === "rezervirano" || submittingRequest}
@@ -168,7 +169,7 @@ export default function ToyDetails() {
           </>
         ) : (
           <>
-            <Button 
+            <Button
               className="flex-1 bg-green-600 hover:bg-green-700"
               onClick={() => addToCart(toy)}
               disabled={toy.status === "rezervirano"}
@@ -181,6 +182,17 @@ export default function ToyDetails() {
           </>
         )}
       </div>
+
+      {/* Chat s donatorom */}
+      {user && toy.donator && user.email !== (toy.donator.korisnik?.email || toy.donator.email) && (
+        <div className="mb-4">
+          <ChatButton
+            toy={toy}
+            donator={toy.donator}
+            className="w-full"
+          />
+        </div>
+      )}
 
       {/* Request Note Input (za RECIPIENT) */}
       {user?.role === "RECIPIENT" && toy.status !== "rezervirano" && (
