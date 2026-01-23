@@ -14,7 +14,6 @@ class AdminServiceTest {
     @BeforeEach
     void setup() {
         adminRepository = mock(AdminRepository.class);
-        // set up with two admin emails
         service = new AdminService("admin1@example.com, admin2@example.com", adminRepository);
     }
 

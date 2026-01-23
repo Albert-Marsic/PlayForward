@@ -3,9 +3,10 @@ package PlayForward.demo.review;
 import PlayForward.demo.mail.EmailService;
 import PlayForward.demo.request.StatusZahtjeva;
 import PlayForward.demo.request.Zahtjev;
+import PlayForward.demo.request.ZahtjevRepository;
+import PlayForward.demo.review.dto.CreateRecenzijaRequest;
 import PlayForward.demo.security.SecurityUtil;
-import PlayForward.demo.user.Donator;
-import PlayForward.demo.user.Primatelj;
+import PlayForward.demo.user.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -48,7 +49,6 @@ class RecenzijaServiceTest {
 
     @Test
     void testCreateReviewSuccessfully() {
-        // Mock static SecurityUtil
         try (MockedStatic<SecurityUtil> security = Mockito.mockStatic(SecurityUtil.class)) {
             security.when(SecurityUtil::currentEmailOrThrow).thenReturn("user@example.com");
 

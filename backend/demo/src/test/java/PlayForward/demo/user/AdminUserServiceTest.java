@@ -1,12 +1,8 @@
 package PlayForward.demo.user;
 
-import PlayForward.demo.campaign.Kampanja;
 import PlayForward.demo.campaign.KampanjaRepository;
 import PlayForward.demo.campaign.PopisIgracakaRepository;
-import PlayForward.demo.listing.Igracka;
 import PlayForward.demo.listing.IgrackaRepository;
-import PlayForward.demo.listing.StatusIgracke;
-import PlayForward.demo.request.Zahtjev;
 import PlayForward.demo.request.ZahtjevRepository;
 import PlayForward.demo.review.RecenzijaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
