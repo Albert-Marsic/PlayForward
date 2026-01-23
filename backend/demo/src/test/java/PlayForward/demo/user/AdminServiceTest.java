@@ -84,4 +84,34 @@ class AdminServiceTest {
         assertFalse(result);
         verify(adminRepository, never()).save(any());
     }
+
+    @Test
+    void testIsAdminEmailWithWhitespaceAndCase() {
+        assertTrue(service.isAdminEmail("  ADMIN1@EXAMPLE.COM  "));
+    }
+
+    @Test
+    void testEnsureAdminForKorisnikNullEmail() {
+        Korisnik korisnik = new Korisnik();
+        korisnik.setId(5L);
+        korisnik.setEmail(null);
+
+        boolean result = service.ensureAdminFor(korisnik);
+
+        assertFalse(result);
+        verify(adminRepository, never()).save(any());
+    }
+
+    @Test
+    void testEnsureAdminForAdminAlreadyExistsIdNull() {
+        Korisnik korisnik = new Korisnik();
+        korisnik.setId(null);
+        korisnik.setEmail("admin1@example.com");
+
+        boolean result = service.ensureAdminFor(korisnik);
+
+        assertFalse(result);
+        verify(adminRepository, never()).save(any());
+    }
+
 }
