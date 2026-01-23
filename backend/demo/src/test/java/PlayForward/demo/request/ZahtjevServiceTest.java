@@ -203,4 +203,140 @@ class ZahtjevServiceTest {
             assertEquals(p, result.getIgracka().getPrimatelj());
         }
     }
+
+    @Test
+    void create_igrackaNotAvailable_throwsConflict() {
+        try (MockedStatic<SecurityUtil> mocked = mockStatic(SecurityUtil.class)) {
+            mocked.when(SecurityUtil::currentEmailOrThrow)
+                    .thenReturn("primatelj@example.com");
+
+            Korisnik k = new Korisnik(); k.setId(1L);
+            Primatelj p = new Primatelj(); p.setId(1L);
+
+            Igracka igracka = new Igracka();
+            igracka.setId(10L);
+            igracka.setStatus(StatusIgracke.REZERVIRANO);
+
+            CreateZahtjevRequest req = new CreateZahtjevRequest();
+            req.igrackaId = 10L;
+
+            when(korisnikRepo.findByEmail(any())).thenReturn(Optional.of(k));
+            when(primateljRepo.findById(1L)).thenReturn(Optional.of(p));
+            when(igrackaRepo.findById(10L)).thenReturn(Optional.of(igracka));
+
+            Exception ex = assertThrows(RuntimeException.class,
+                    () -> service.create(req));
+
+            assertEquals("Igračka više nije dostupna.", ex.getMessage());
+        }
+    }
+
+    @Test
+    void create_activeRequestExists_throwsConflict() {
+        try (MockedStatic<SecurityUtil> mocked = mockStatic(SecurityUtil.class)) {
+            mocked.when(SecurityUtil::currentEmailOrThrow)
+                    .thenReturn("primatelj@example.com");
+
+            Korisnik k = new Korisnik(); k.setId(1L);
+            Primatelj p = new Primatelj(); p.setId(1L);
+            Donator d = new Donator(); d.setId(2L);
+
+            Igracka igracka = new Igracka();
+            igracka.setId(10L);
+            igracka.setStatus(StatusIgracke.DOSTUPNO);
+            igracka.setDonator(d);
+
+            CreateZahtjevRequest req = new CreateZahtjevRequest();
+            req.igrackaId = 10L;
+
+            when(korisnikRepo.findByEmail(any())).thenReturn(Optional.of(k));
+            when(primateljRepo.findById(1L)).thenReturn(Optional.of(p));
+            when(igrackaRepo.findById(10L)).thenReturn(Optional.of(igracka));
+            when(zahtjevRepo.existsByIgracka_IdAndStatusIn(anyLong(), anySet()))
+                    .thenReturn(true);
+
+            Exception ex = assertThrows(RuntimeException.class,
+                    () -> service.create(req));
+
+            assertEquals("Za ovu igračku već postoji aktivan zahtjev.", ex.getMessage());
+        }
+    }
+
+    @Test
+    void withdraw_wrongPrimatelj_throwsForbidden() {
+        try (MockedStatic<SecurityUtil> mocked = mockStatic(SecurityUtil.class)) {
+            mocked.when(SecurityUtil::currentEmailOrThrow)
+                    .thenReturn("primatelj@example.com");
+
+            Korisnik k = new Korisnik(); k.setId(1L);
+            Primatelj loggedIn = new Primatelj(); loggedIn.setId(1L);
+            Primatelj other = new Primatelj(); other.setId(2L);
+
+            when(korisnikRepo.findByEmail(any())).thenReturn(Optional.of(k));
+            when(primateljRepo.findById(1L)).thenReturn(Optional.of(loggedIn));
+
+            Zahtjev z = new Zahtjev();
+            z.setPrimatelj(other);
+            z.setStatus(StatusZahtjeva.PENDING);
+
+            when(zahtjevRepo.findById(50L)).thenReturn(Optional.of(z));
+
+            Exception ex = assertThrows(RuntimeException.class,
+                    () -> service.withdraw(50L));
+
+            assertEquals("Nemate pravo odustati od ovog zahtjeva.", ex.getMessage());
+        }
+    }
+
+    @Test
+    void withdraw_invalidStatus_throwsBadRequest() {
+        try (MockedStatic<SecurityUtil> mocked = mockStatic(SecurityUtil.class)) {
+            mocked.when(SecurityUtil::currentEmailOrThrow)
+                    .thenReturn("primatelj@example.com");
+
+            Korisnik k = new Korisnik(); k.setId(1L);
+            Primatelj p = new Primatelj(); p.setId(1L);
+
+            when(korisnikRepo.findByEmail(any())).thenReturn(Optional.of(k));
+            when(primateljRepo.findById(1L)).thenReturn(Optional.of(p));
+
+            Zahtjev z = new Zahtjev();
+            z.setPrimatelj(p);
+            z.setStatus(StatusZahtjeva.COMPLETED);
+
+            when(zahtjevRepo.findById(60L)).thenReturn(Optional.of(z));
+
+            Exception ex = assertThrows(RuntimeException.class,
+                    () -> service.withdraw(60L));
+
+            assertEquals("Ne možete odustati od ovog zahtjeva.", ex.getMessage());
+        }
+    }
+
+    @Test
+    void approve_wrongDonator_throwsForbidden() {
+        try (MockedStatic<SecurityUtil> mocked = mockStatic(SecurityUtil.class)) {
+            mocked.when(SecurityUtil::currentEmailOrThrow)
+                    .thenReturn("donator@example.com");
+
+            Korisnik k = new Korisnik(); k.setId(5L);
+            Donator loggedIn = new Donator(); loggedIn.setId(5L);
+            Donator owner = new Donator(); owner.setId(2L);
+
+            when(korisnikRepo.findByEmail(any())).thenReturn(Optional.of(k));
+            when(donatorRepo.findById(5L)).thenReturn(Optional.of(loggedIn));
+
+            Zahtjev z = new Zahtjev();
+            z.setDonator(owner);
+            z.setStatus(StatusZahtjeva.PENDING);
+
+            when(zahtjevRepo.findById(70L)).thenReturn(Optional.of(z));
+
+            Exception ex = assertThrows(RuntimeException.class,
+                    () -> service.approveForCurrentDonator(70L));
+
+            assertEquals("Nemate pravo odobriti ovaj zahtjev.", ex.getMessage());
+        }
+    }
+
 }
