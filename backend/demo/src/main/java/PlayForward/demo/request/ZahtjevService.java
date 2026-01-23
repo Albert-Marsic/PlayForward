@@ -11,8 +11,10 @@ import PlayForward.demo.user.DonatorRepository;
 import PlayForward.demo.user.KorisnikRepository;
 import PlayForward.demo.user.Primatelj;
 import PlayForward.demo.user.PrimateljRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.EnumSet;
@@ -49,42 +51,42 @@ public class ZahtjevService {
     private Long currentKorisnikId() {
         String email = SecurityUtil.currentEmailOrThrow();
         return korisnikRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Korisnik ne postoji u bazi."))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik ne postoji u bazi."))
                 .getId();
     }
 
     private Primatelj currentPrimateljOrThrow() {
         Long id = currentKorisnikId();
         return primateljRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nemate PRIMATELJ ulogu."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate PRIMATELJ ulogu."));
     }
 
     private Donator currentDonatorOrThrow() {
         Long id = currentKorisnikId();
         return donatorRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nemate DONATOR ulogu."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate DONATOR ulogu."));
     }
 
     @Transactional
     public Zahtjev create(CreateZahtjevRequest req) {
         if (req == null || req.igrackaId == null || req.igrackaId <= 0) {
-            throw new RuntimeException("ID igračke je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID igračke je obavezan.");
         }
 
         Primatelj primatelj = currentPrimateljOrThrow();
         Igracka igracka = igrackaRepo.findById(req.igrackaId)
-                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Igračka ne postoji."));
 
         if (igracka.getStatus() != StatusIgracke.DOSTUPNO) {
-            throw new RuntimeException("Igračka više nije dostupna.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Igračka više nije dostupna.");
         }
 
         if (igracka.getDonator() != null && igracka.getDonator().getId().equals(primatelj.getId())) {
-            throw new RuntimeException("Ne možete zatražiti vlastitu igračku.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ne možete zatražiti vlastitu igračku.");
         }
 
         if (zahtjevRepo.existsByIgracka_IdAndStatusIn(igracka.getId(), ACTIVE_STATUSES)) {
-            throw new RuntimeException("Za ovu igračku već postoji aktivan zahtjev.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Za ovu igračku već postoji aktivan zahtjev.");
         }
 
         Zahtjev zahtjev = new Zahtjev();
@@ -123,15 +125,15 @@ public class ZahtjevService {
     @Transactional(readOnly = true)
     public Zahtjev getForCurrentPrimatelj(Long zahtjevId) {
         if (zahtjevId == null || zahtjevId <= 0) {
-            throw new RuntimeException("ID zahtjeva nije validan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID zahtjeva nije validan.");
         }
 
         Primatelj primatelj = currentPrimateljOrThrow();
         Zahtjev zahtjev = zahtjevRepo.findById(zahtjevId)
-                .orElseThrow(() -> new RuntimeException("Zahtjev ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zahtjev ne postoji."));
 
         if (!zahtjev.getPrimatelj().getId().equals(primatelj.getId())) {
-            throw new RuntimeException("Nemate pravo pristupa ovom zahtjevu.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo pristupa ovom zahtjevu.");
         }
 
         return zahtjev;
@@ -141,15 +143,15 @@ public class ZahtjevService {
     public Zahtjev withdraw(Long zahtjevId) {
         Primatelj primatelj = currentPrimateljOrThrow();
         Zahtjev zahtjev = zahtjevRepo.findById(zahtjevId)
-                .orElseThrow(() -> new RuntimeException("Zahtjev ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zahtjev ne postoji."));
 
         if (!zahtjev.getPrimatelj().getId().equals(primatelj.getId())) {
-            throw new RuntimeException("Nemate pravo odustati od ovog zahtjeva.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo odustati od ovog zahtjeva.");
         }
 
         if (zahtjev.getStatus() != StatusZahtjeva.PENDING
                 && zahtjev.getStatus() != StatusZahtjeva.APPROVED) {
-            throw new RuntimeException("Ne možete odustati od ovog zahtjeva.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ne možete odustati od ovog zahtjeva.");
         }
 
         zahtjev.setStatus(StatusZahtjeva.WITHDRAWN);
@@ -185,14 +187,14 @@ public class ZahtjevService {
     public Zahtjev markCompleted(Long zahtjevId) {
         Primatelj primatelj = currentPrimateljOrThrow();
         Zahtjev zahtjev = zahtjevRepo.findById(zahtjevId)
-                .orElseThrow(() -> new RuntimeException("Zahtjev ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zahtjev ne postoji."));
 
         if (!zahtjev.getPrimatelj().getId().equals(primatelj.getId())) {
-            throw new RuntimeException("Nemate pravo mijenjati ovaj zahtjev.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo mijenjati ovaj zahtjev.");
         }
 
         if (zahtjev.getStatus() != StatusZahtjeva.APPROVED) {
-            throw new RuntimeException("Zahtjev mora biti odobren prije potvrde preuzimanja.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zahtjev mora biti odobren prije potvrde preuzimanja.");
         }
 
         zahtjev.setStatus(StatusZahtjeva.COMPLETED);
@@ -202,27 +204,27 @@ public class ZahtjevService {
     @Transactional
     public Zahtjev approveForCurrentDonator(Long zahtjevId) {
         if (zahtjevId == null || zahtjevId <= 0) {
-            throw new RuntimeException("ID zahtjeva nije validan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID zahtjeva nije validan.");
         }
 
         Donator donator = currentDonatorOrThrow();
         Zahtjev zahtjev = zahtjevRepo.findById(zahtjevId)
-                .orElseThrow(() -> new RuntimeException("Zahtjev ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zahtjev ne postoji."));
 
         if (!zahtjev.getDonator().getId().equals(donator.getId())) {
-            throw new RuntimeException("Nemate pravo odobriti ovaj zahtjev.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo odobriti ovaj zahtjev.");
         }
 
         if (zahtjev.getStatus() != StatusZahtjeva.PENDING) {
-            throw new RuntimeException("Samo zahtjevi na čekanju mogu biti odobreni.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Samo zahtjevi na čekanju mogu biti odobreni.");
         }
 
         Igracka igracka = zahtjev.getIgracka();
         if (igracka == null) {
-            throw new RuntimeException("Zahtjev nema pridruženu igračku.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zahtjev nema pridruženu igračku.");
         }
         if (igracka.getStatus() != StatusIgracke.DOSTUPNO) {
-            throw new RuntimeException("Igračka više nije dostupna.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Igračka više nije dostupna.");
         }
 
         zahtjev.setStatus(StatusZahtjeva.APPROVED);

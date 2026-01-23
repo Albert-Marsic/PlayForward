@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Search, ShoppingCart } from 'lucide-react'
+import { Search, Heart } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
@@ -45,11 +45,11 @@ export default function Navbar() {
           {/* Right */}
           <div className="flex items-center gap-3">
 
-            {/* Košarica */}
-            <Link to="/kosarica" className="relative">
-              <ShoppingCart className="w-6 h-6" />
+            {/* Odabrane igračke */}
+            <Link to="/kosarica" className="relative" title="Odabrane igračke">
+              <Heart className="w-6 h-6" />
               {cartItems.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5">
+                <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full px-1.5">
                   {cartItems.length}
                 </span>
               )}

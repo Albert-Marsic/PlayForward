@@ -13,8 +13,10 @@ import PlayForward.demo.user.Primatelj;
 import PlayForward.demo.user.PrimateljRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -47,57 +49,57 @@ public class RecenzijaService {
     private Long currentKorisnikId() {
         String email = SecurityUtil.currentEmailOrThrow();
         return korisnikRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Korisnik ne postoji u bazi."))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik ne postoji u bazi."))
                 .getId();
     }
 
     private Primatelj currentPrimateljOrThrow() {
         Long id = currentKorisnikId();
         return primateljRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nemate PRIMATELJ ulogu."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate PRIMATELJ ulogu."));
     }
 
     private Donator currentDonatorOrThrow() {
         Long id = currentKorisnikId();
         return donatorRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nemate DONATOR ulogu."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate DONATOR ulogu."));
     }
 
     @Transactional
     public Recenzija create(CreateRecenzijaRequest req) {
         if (req == null || req.zahtjevId == null || req.zahtjevId <= 0) {
-            throw new RuntimeException("ID zahtjeva je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID zahtjeva je obavezan.");
         }
         if (req.ocjena == null || req.ocjena < 1 || req.ocjena > 5) {
-            throw new RuntimeException("Ocjena mora biti između 1 i 5.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ocjena mora biti između 1 i 5.");
         }
         if (req.tekst == null || req.tekst.trim().isEmpty()) {
-            throw new RuntimeException("Tekst recenzije je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tekst recenzije je obavezan.");
         }
 
         String trimmed = req.tekst.trim();
         if (trimmed.length() < 10) {
-            throw new RuntimeException("Recenzija mora imati najmanje 10 znakova.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Recenzija mora imati najmanje 10 znakova.");
         }
         if (trimmed.length() > 500) {
-            throw new RuntimeException("Recenzija može imati najviše 500 znakova.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Recenzija može imati najviše 500 znakova.");
         }
 
         Primatelj primatelj = currentPrimateljOrThrow();
 
         Zahtjev zahtjev = zahtjevRepo.findById(req.zahtjevId)
-                .orElseThrow(() -> new RuntimeException("Zahtjev ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zahtjev ne postoji."));
 
         if (!zahtjev.getPrimatelj().getId().equals(primatelj.getId())) {
-            throw new RuntimeException("Nemate pravo ocjenjivati ovaj zahtjev.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo ocjenjivati ovaj zahtjev.");
         }
 
         if (zahtjev.getStatus() != StatusZahtjeva.COMPLETED) {
-            throw new RuntimeException("Recenzija je moguća tek nakon preuzimanja.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Recenzija je moguća tek nakon preuzimanja.");
         }
 
         if (recenzijaRepo.existsByZahtjev_Id(zahtjev.getId())) {
-            throw new RuntimeException("Recenzija za ovaj zahtjev već postoji.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Recenzija za ovaj zahtjev već postoji.");
         }
 
         Recenzija recenzija = new Recenzija();
@@ -132,12 +134,12 @@ public class RecenzijaService {
     @Transactional(readOnly = true)
     public List<Recenzija> listForDonator(Long donatorId) {
         if (donatorId == null || donatorId <= 0) {
-            throw new RuntimeException("ID donatora je obavezan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID donatora je obavezan.");
         }
 
         Donator donator = currentDonatorOrThrow();
         if (!donator.getId().equals(donatorId)) {
-            throw new RuntimeException("Nemate pravo pregledavati tuđe recenzije.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo pregledavati tuđe recenzije.");
         }
 
         return recenzijaRepo.findByDonator_IdOrderByIdDesc(donatorId);
