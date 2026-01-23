@@ -198,7 +198,7 @@ class KampanjaServiceTest {
         return primatelj;
     }
 
-    private Donator mockCurrentDonator() {
+    private void mockCurrentDonator() {
         Donator donator = mock(Donator.class);
         Korisnik korisnik = mock(Korisnik.class);
         when(korisnik.getId()).thenReturn(1L);
@@ -206,6 +206,5 @@ class KampanjaServiceTest {
         when(korisnikRepo.findByEmail(anyString())).thenReturn(Optional.of(korisnik));
         when(donator.getId()).thenReturn(1L);
         when(donatorRepo.findById(1L)).thenReturn(Optional.of(donator));
-        return donator;
     }
 }

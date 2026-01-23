@@ -117,4 +117,6 @@ public class Zahtjev {
     public void setDonator(Donator donator) {
         this.donator = donator;
     }
+
+    public void setId(Long l) { this.id = l; }
 }

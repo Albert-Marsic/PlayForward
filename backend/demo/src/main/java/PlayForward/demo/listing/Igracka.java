@@ -115,4 +115,6 @@ public class Igracka {
     public void setPrimatelj(Primatelj primatelj) {
         this.primatelj = primatelj;
     }
+
+    public void setId(long l) { this.id = l; }
 }
