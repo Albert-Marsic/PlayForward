@@ -15,7 +15,9 @@ export default function ReviewPage() {
   const [error, setError] = useState(null);
   const [zahtjev, setZahtjev] = useState(null);
   const [loadingZahtjev, setLoadingZahtjev] = useState(true);
-  const reviewLocked = zahtjev && zahtjev.status !== "COMPLETED";
+  const reviewLocked = zahtjev
+    && zahtjev.status !== "PICKED_UP"
+    && zahtjev.status !== "COMPLETED";
 
   useEffect(() => {
     const fetchZahtjev = async () => {
@@ -56,7 +58,7 @@ export default function ReviewPage() {
       return;
     }
 
-    if (!zahtjev || zahtjev.status !== "COMPLETED") {
+    if (!zahtjev || (zahtjev.status !== "PICKED_UP" && zahtjev.status !== "COMPLETED")) {
       setError("Recenzija je moguća tek nakon preuzimanja donacije");
       return;
     }

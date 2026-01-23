@@ -42,8 +42,8 @@ public class ZahtjevController {
     }
 
     @PostMapping("/{id}/preuzeto")
-    public ResponseEntity<Zahtjev> markCompleted(@PathVariable Long id) {
-        return ResponseEntity.ok(zahtjevService.markCompleted(id));
+    public ResponseEntity<Zahtjev> markPickedUp(@PathVariable Long id) {
+        return ResponseEntity.ok(zahtjevService.markPickedUpForCurrentDonator(id));
     }
 
     @PostMapping("/{id}/odobri")

@@ -24,8 +24,14 @@ import java.util.Set;
 @Service
 public class ZahtjevService {
 
-    private static final Set<StatusZahtjeva> ACTIVE_STATUSES = EnumSet.of(StatusZahtjeva.PENDING,
-            StatusZahtjeva.APPROVED, StatusZahtjeva.COMPLETED);
+    private static final Set<StatusZahtjeva> ACTIVE_STATUSES = EnumSet.of(
+            StatusZahtjeva.PENDING,
+            StatusZahtjeva.APPROVED,
+            StatusZahtjeva.POSTAGE_PENDING,
+            StatusZahtjeva.POSTAGE_PAID,
+            StatusZahtjeva.PICKED_UP,
+            StatusZahtjeva.COMPLETED
+    );
 
     private final ZahtjevRepository zahtjevRepo;
     private final IgrackaRepository igrackaRepo;
@@ -150,7 +156,8 @@ public class ZahtjevService {
         }
 
         if (zahtjev.getStatus() != StatusZahtjeva.PENDING
-                && zahtjev.getStatus() != StatusZahtjeva.APPROVED) {
+                && zahtjev.getStatus() != StatusZahtjeva.APPROVED
+                && zahtjev.getStatus() != StatusZahtjeva.POSTAGE_PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ne možete odustati od ovog zahtjeva.");
         }
 
@@ -184,20 +191,20 @@ public class ZahtjevService {
     }
 
     @Transactional
-    public Zahtjev markCompleted(Long zahtjevId) {
-        Primatelj primatelj = currentPrimateljOrThrow();
+    public Zahtjev markPickedUpForCurrentDonator(Long zahtjevId) {
+        Donator donator = currentDonatorOrThrow();
         Zahtjev zahtjev = zahtjevRepo.findById(zahtjevId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zahtjev ne postoji."));
 
-        if (!zahtjev.getPrimatelj().getId().equals(primatelj.getId())) {
+        if (!zahtjev.getDonator().getId().equals(donator.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo mijenjati ovaj zahtjev.");
         }
 
-        if (zahtjev.getStatus() != StatusZahtjeva.APPROVED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zahtjev mora biti odobren prije potvrde preuzimanja.");
+        if (zahtjev.getStatus() != StatusZahtjeva.POSTAGE_PAID) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Poštarina mora biti plaćena prije potvrde preuzimanja.");
         }
 
-        zahtjev.setStatus(StatusZahtjeva.COMPLETED);
+        zahtjev.setStatus(StatusZahtjeva.PICKED_UP);
         return zahtjevRepo.save(zahtjev);
     }
 
@@ -227,7 +234,7 @@ public class ZahtjevService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Igračka više nije dostupna.");
         }
 
-        zahtjev.setStatus(StatusZahtjeva.APPROVED);
+        zahtjev.setStatus(StatusZahtjeva.POSTAGE_PENDING);
         igracka.setStatus(StatusIgracke.REZERVIRANO);
         igracka.setPrimatelj(zahtjev.getPrimatelj());
         igrackaRepo.save(igracka);

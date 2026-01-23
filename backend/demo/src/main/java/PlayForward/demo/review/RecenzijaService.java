@@ -94,7 +94,8 @@ public class RecenzijaService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo ocjenjivati ovaj zahtjev.");
         }
 
-        if (zahtjev.getStatus() != StatusZahtjeva.COMPLETED) {
+        if (zahtjev.getStatus() != StatusZahtjeva.PICKED_UP
+                && zahtjev.getStatus() != StatusZahtjeva.COMPLETED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Recenzija je moguća tek nakon preuzimanja.");
         }
 

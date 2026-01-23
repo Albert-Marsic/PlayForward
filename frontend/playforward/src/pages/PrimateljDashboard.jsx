@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { getMyRequests, withdrawRequest, completeRequest } from "@/api/dashboard";
+import { getMyRequests, withdrawRequest } from "@/api/dashboard";
+import PayPalButton from "@/components/PayPalButton";
 
 export default function PrimateljDashboard() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [withdrawing, setWithdrawing] = useState(null);
-  const [completing, setCompleting] = useState(null);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -44,32 +44,26 @@ export default function PrimateljDashboard() {
     }
   };
 
-  const handleComplete = async (requestId) => {
-    if (!confirm("Potvrdite da ste preuzeli donaciju.")) return;
-
-    try {
-      setCompleting(requestId);
-      const updated = await completeRequest(requestId);
-      setRequests(requests.map(req => (req.id === requestId ? updated : req)));
-      alert("Preuzimanje je potvrđeno");
-    } catch (err) {
-      alert("Greška pri potvrdi preuzimanja: " + err.message);
-    } finally {
-      setCompleting(null);
-    }
+  const handlePostagePaid = (updatedRequest) => {
+    if (!updatedRequest || !updatedRequest.id) return;
+    setRequests(prev => prev.map(req => (req.id === updatedRequest.id ? updatedRequest : req)));
   };
 
   if (loading) return <p className="p-6">Učitavanje...</p>;
 
   const pending = requests.filter(r => r.status === "PENDING").length;
-  const approved = requests.filter(r => r.status === "APPROVED").length;
-  const completed = requests.filter(r => r.status === "COMPLETED").length;
+  const postagePending = requests.filter(r => r.status === "POSTAGE_PENDING" || r.status === "APPROVED").length;
+  const postagePaid = requests.filter(r => r.status === "POSTAGE_PAID").length;
+  const pickedUp = requests.filter(r => r.status === "PICKED_UP" || r.status === "COMPLETED").length;
 
   // Mapiranje statusa na hrvatsku
   const getStatusLabel = (status) => {
     switch(status) {
       case "PENDING": return "U čekanju";
-      case "APPROVED": return "Odobren";
+      case "APPROVED": return "Odobren - čeka poštarinu";
+      case "POSTAGE_PENDING": return "Čeka plaćanje poštarine";
+      case "POSTAGE_PAID": return "Poštarina plaćena";
+      case "PICKED_UP": return "Preuzeto";
       case "COMPLETED": return "Preuzeto";
       case "REJECTED": return "Odbijen";
       case "WITHDRAWN": return "Odustano";
@@ -80,7 +74,10 @@ export default function PrimateljDashboard() {
   const getStatusColor = (status) => {
     switch(status) {
       case "PENDING": return "bg-yellow-100 text-yellow-800";
-      case "APPROVED": return "bg-blue-100 text-blue-800";
+      case "APPROVED": return "bg-orange-100 text-orange-800";
+      case "POSTAGE_PENDING": return "bg-orange-100 text-orange-800";
+      case "POSTAGE_PAID": return "bg-indigo-100 text-indigo-800";
+      case "PICKED_UP": return "bg-green-100 text-green-800";
       case "COMPLETED": return "bg-green-100 text-green-800";
       case "REJECTED": return "bg-red-100 text-red-800";
       case "WITHDRAWN": return "bg-gray-100 text-gray-800";
@@ -104,7 +101,7 @@ export default function PrimateljDashboard() {
       )}
 
       {/* Statistika */}
-      <div className="grid md:grid-cols-4 gap-4 mb-6">
+      <div className="grid md:grid-cols-5 gap-4 mb-6">
         <div className="border rounded p-4">
           <p className="text-gray-600 text-sm">Ukupno zahtjeva</p>
           <p className="text-2xl font-bold">{requests.length}</p>
@@ -114,12 +111,16 @@ export default function PrimateljDashboard() {
           <p className="text-2xl font-bold text-yellow-600">{pending}</p>
         </div>
         <div className="border rounded p-4">
-          <p className="text-gray-600 text-sm">Odobren</p>
-          <p className="text-2xl font-bold text-blue-600">{approved}</p>
+          <p className="text-gray-600 text-sm">Čeka poštarinu</p>
+          <p className="text-2xl font-bold text-orange-600">{postagePending}</p>
+        </div>
+        <div className="border rounded p-4">
+          <p className="text-gray-600 text-sm">Poštarina plaćena</p>
+          <p className="text-2xl font-bold text-indigo-600">{postagePaid}</p>
         </div>
         <div className="border rounded p-4">
           <p className="text-gray-600 text-sm">Preuzeto</p>
-          <p className="text-2xl font-bold text-green-600">{completed}</p>
+          <p className="text-2xl font-bold text-green-600">{pickedUp}</p>
         </div>
       </div>
 
@@ -178,26 +179,32 @@ export default function PrimateljDashboard() {
                     </Button>
                   )}
 
-                  {request.status === "COMPLETED" && (
+                  {(request.status === "PICKED_UP" || request.status === "COMPLETED") && (
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/recenzija/${request.id}`}>Ocijeni donatora</Link>
                     </Button>
                   )}
 
-                  {request.status === "APPROVED" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleComplete(request.id)}
-                      disabled={completing === request.id}
-                    >
-                      {completing === request.id ? "Potvrđujem..." : "Potvrdi preuzimanje"}
-                    </Button>
+                  {(request.status === "POSTAGE_PENDING" || request.status === "APPROVED") && (
+                    <PayPalButton
+                      requestId={request.id}
+                      onSuccess={handlePostagePaid}
+                      onError={(err) => alert("Greška pri plaćanju: " + err.message)}
+                    />
                   )}
 
-                  {(request.status === "PENDING" || request.status === "APPROVED") && (
+                  {(request.status === "PENDING"
+                    || request.status === "APPROVED"
+                    || request.status === "POSTAGE_PENDING"
+                    || request.status === "POSTAGE_PAID") && (
                     <p className="text-xs text-gray-500 text-center">
-                      {request.status === "PENDING" ? "Čeka se odgovor donatora" : "Odobren - očekuje preuzimanje"}
+                      {request.status === "PENDING"
+                        ? "Čeka se odgovor donatora"
+                        : request.status === "POSTAGE_PENDING" || request.status === "APPROVED"
+                          ? "Odobren - potrebno je platiti poštarinu"
+                          : request.status === "POSTAGE_PAID"
+                            ? "Poštarina je plaćena - čekajte potvrdu donatora"
+                            : "Odobren"}
                     </p>
                   )}
                 </div>
