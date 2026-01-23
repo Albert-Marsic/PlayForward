@@ -126,4 +126,89 @@ class RecenzijaServiceTest {
             assertTrue(ex.getMessage().contains("Nemate pravo pregledavati tuđe recenzije"));
         }
     }
+
+    @Test
+    void testCreateReviewThrowsOnShortText() {
+        CreateRecenzijaRequest req = new CreateRecenzijaRequest();
+        req.zahtjevId = 1L;
+        req.ocjena = 5;
+        req.tekst = "Too short";
+
+        Exception ex = assertThrows(RuntimeException.class, () -> service.create(req));
+        assertTrue(ex.getMessage().contains("Recenzija mora imati najmanje 10 znakova"));
+    }
+
+    @Test
+    void testCreateReviewThrowsWhenZahtjevNotPickedUpOrCompleted() {
+        try (MockedStatic<SecurityUtil> security = Mockito.mockStatic(SecurityUtil.class)) {
+            security.when(SecurityUtil::currentEmailOrThrow).thenReturn("user@example.com");
+
+            Primatelj prim = new Primatelj();
+            prim.setId(1L);
+
+            Zahtjev zahtjev = new Zahtjev();
+            zahtjev.setId(100L);
+            zahtjev.setPrimatelj(prim);
+            zahtjev.setStatus(StatusZahtjeva.PENDING); // not PICKED_UP or COMPLETED
+
+            when(korisnikRepo.findByEmail("user@example.com")).thenReturn(Optional.of(prim.getKorisnik()));
+            when(primateljRepo.findById(1L)).thenReturn(Optional.of(prim));
+            when(zahtjevRepo.findById(100L)).thenReturn(Optional.of(zahtjev));
+
+            CreateRecenzijaRequest req = new CreateRecenzijaRequest();
+            req.zahtjevId = 100L;
+            req.ocjena = 5;
+            req.tekst = "Valid review text";
+
+            Exception ex = assertThrows(RuntimeException.class, () -> service.create(req));
+            assertTrue(ex.getMessage().contains("Recenzija je moguća tek nakon preuzimanja"));
+        }
+    }
+
+    @Test
+    void testCreateReviewThrowsIfRecenzijaAlreadyExists() {
+        try (MockedStatic<SecurityUtil> security = Mockito.mockStatic(SecurityUtil.class)) {
+            security.when(SecurityUtil::currentEmailOrThrow).thenReturn("user@example.com");
+
+            Primatelj prim = new Primatelj();
+            prim.setId(1L);
+
+            Zahtjev zahtjev = new Zahtjev();
+            zahtjev.setId(100L);
+            zahtjev.setPrimatelj(prim);
+            zahtjev.setStatus(StatusZahtjeva.COMPLETED);
+
+            when(korisnikRepo.findByEmail("user@example.com")).thenReturn(Optional.of(prim.getKorisnik()));
+            when(primateljRepo.findById(1L)).thenReturn(Optional.of(prim));
+            when(zahtjevRepo.findById(100L)).thenReturn(Optional.of(zahtjev));
+            when(recenzijaRepo.existsByZahtjev_Id(100L)).thenReturn(true);
+
+            CreateRecenzijaRequest req = new CreateRecenzijaRequest();
+            req.zahtjevId = 100L;
+            req.ocjena = 5;
+            req.tekst = "Valid review text";
+
+            Exception ex = assertThrows(RuntimeException.class, () -> service.create(req));
+            assertTrue(ex.getMessage().contains("Recenzija za ovaj zahtjev već postoji"));
+        }
+    }
+
+    @Test
+    void testListForCurrentPrimateljReturnsEmptyList() {
+        try (MockedStatic<SecurityUtil> security = Mockito.mockStatic(SecurityUtil.class)) {
+            security.when(SecurityUtil::currentEmailOrThrow).thenReturn("user@example.com");
+
+            Primatelj prim = new Primatelj();
+            prim.setId(1L);
+
+            when(korisnikRepo.findByEmail("user@example.com")).thenReturn(Optional.of(prim.getKorisnik()));
+            when(primateljRepo.findById(1L)).thenReturn(Optional.of(prim));
+            when(recenzijaRepo.findByPrimatelj_IdOrderByIdDesc(1L)).thenReturn(List.of());
+
+            List<Recenzija> list = service.listForCurrentPrimatelj();
+            assertNotNull(list);
+            assertTrue(list.isEmpty());
+        }
+    }
+
 }
