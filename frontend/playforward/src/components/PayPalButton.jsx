@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNotification } from "@/context/NotificationContext";
 import { capturePayPalOrder, createPayPalOrder } from "@/api/paypal";
+import { API_BASE_URL } from "@/lib/config";
 
 export default function PayPalButton({ requestId, onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
@@ -9,22 +10,39 @@ export default function PayPalButton({ requestId, onSuccess, onError }) {
 
   useEffect(() => {
     let cancelled = false;
-    const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+    const resolvePayPalClientId = async () => {
+      if (import.meta.env.VITE_PAYPAL_CLIENT_ID) {
+        return import.meta.env.VITE_PAYPAL_CLIENT_ID;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/config/paypal-client-id`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        return data?.clientId ?? "";
+      } catch (err) {
+        console.warn("Neuspješno dohvaćanje PayPal client ID-a:", err);
+        return "";
+      }
+    };
 
     const loadPayPalSdk = () => {
       if (window.paypal) return Promise.resolve();
       const existingScript = document.querySelector("script[src*='paypal.com/sdk/js']");
       if (!existingScript) {
-        if (!paypalClientId) {
-          return Promise.reject(new Error("PayPal client ID nije postavljen"));
-        }
-        const script = document.createElement("script");
-        script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=EUR`;
-        script.async = true;
-        return new Promise((resolve, reject) => {
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("PayPal SDK se nije mogao učitati"));
-          document.body.appendChild(script);
+        return resolvePayPalClientId().then((paypalClientId) => {
+          if (!paypalClientId) {
+            return Promise.reject(new Error("PayPal client ID nije postavljen"));
+          }
+          const script = document.createElement("script");
+          script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=EUR`;
+          script.async = true;
+          return new Promise((resolve, reject) => {
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("PayPal SDK se nije mogao učitati"));
+            document.body.appendChild(script);
+          });
         });
       }
       return new Promise((resolve, reject) => {
