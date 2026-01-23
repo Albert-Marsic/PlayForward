@@ -7,7 +7,7 @@ PlayForward je web platforma koja povezuje donatore igračaka s korisnicima koji
 Ideja je objediniti sve korake doniranja igračaka: od registracije donatora i primatelja, objave dostupnih igračaka, vođenja informacija kampanja, lakok pretrazivanja i slicno. Backend servis (Spring Boot) izlaže REST API koji upravlja korisnicima, igračkama, kampanjama i recenzijama, dok frontend (React + Vite) osigurava moderno sučelje s heroj sekcijom, listama igračaka, obrascima za donacije i integriranom Google prijavom. Google OAuth2 i verifikacija putem e-mail tokena pokrivaju različite scenarije autentifikacije, a baza u PostgreSQL-u čuva sve entitete (korisnici, donatori, primatelji, kampanje, popisi igračaka, recenzije).
 
 ## Deploy (Render)
-- **Frontend**: https://playforward.onrender.com (public URL) i https://playforward-ee8c.onrender.com (Render servis URL).
+- **Frontend**: https://playforward-ee8c.onrender.com (Render servis URL).
 - **Backend API**: https://playforward-backend-e5bg.onrender.com (base URL za `/api/*`).
 
 # Funkcijski zahtjevi
