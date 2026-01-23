@@ -1,9 +1,56 @@
+import { useEffect, useMemo, useState } from 'react'
 import ToyCard from './ToyCard'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { getToys } from '@/api/toys'
 
 export default function RecentToys() {
+  const [toys, setToys] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchToys = async () => {
+      try {
+        setLoading(true)
+        const data = await getToys()
+        setToys(data || [])
+        setError(null)
+      } catch (err) {
+        setError("Greška pri učitavanju igračaka")
+        setToys([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchToys()
+  }, [])
+
+  const recentToys = useMemo(() => {
+    if (!toys.length) return []
+
+    const parseTime = (value) => {
+      if (!value) return null
+      const date = new Date(value)
+      return Number.isNaN(date.getTime()) ? null : date.getTime()
+    }
+
+    return [...toys]
+      .sort((a, b) => {
+        const timeA = parseTime(a.datumKreiranjaIgracke)
+        const timeB = parseTime(b.datumKreiranjaIgracke)
+        if (timeA !== null && timeB !== null) {
+          return timeB - timeA
+        }
+        const idA = a.id ?? a.idIgracka ?? 0
+        const idB = b.id ?? b.idIgracka ?? 0
+        return idB - idA
+      })
+      .slice(0, 5)
+  }, [toys])
+
   return (
     <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-4">
@@ -17,10 +64,28 @@ export default function RecentToys() {
         </div>
 
         {/* Toy Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 max-w-7xl mx-auto mb-12">
-          {Array(8).fill({}).map((_, i) => (
-            <ToyCard key={i} toy={{image: null, name: null}} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-7xl mx-auto mb-12">
+          {loading && Array(5).fill({}).map((_, i) => (
+            <ToyCard key={`skeleton-${i}`} toy={null} />
           ))}
+          {!loading && recentToys.map((toy) => {
+            const toyId = toy.id ?? toy.idIgracka
+            return (
+              <Link to={`/igracke/${toyId}`} key={toyId}>
+                <ToyCard toy={toy} />
+              </Link>
+            )
+          })}
+          {!loading && !error && recentToys.length === 0 && (
+            <p className="text-sm text-gray-500 col-span-full text-center">
+              Trenutno nema objavljenih igračaka.
+            </p>
+          )}
+          {!loading && error && (
+            <p className="text-sm text-red-600 col-span-full text-center">
+              {error}
+            </p>
+          )}
         </div>
 
         {/* See More Button */}

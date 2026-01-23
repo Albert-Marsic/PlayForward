@@ -3,8 +3,10 @@ package PlayForward.demo.listing;
 import PlayForward.demo.listing.dto.CreateIgrackaRequest;
 import PlayForward.demo.security.SecurityUtil;
 import PlayForward.demo.user.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -39,7 +41,7 @@ public class IgrackaService {
 
         // Po emailu pronađemo korisnika u bazi i vratimo njegov ID
         return korisnikRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Korisnik ne postoji u bazi."))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Korisnik ne postoji u bazi."))
                 .getId();
     }
 
@@ -49,7 +51,7 @@ public class IgrackaService {
 
         return donatorRepo.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Nemate DONATOR ulogu (niste upisani u tablicu donator).")
+                        new ResponseStatusException(HttpStatus.FORBIDDEN,"Nemate DONATOR ulogu (niste upisani u tablicu donator).")
                 );
     }
 
@@ -59,7 +61,7 @@ public class IgrackaService {
 
         return primateljRepo.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Nemate PRIMATELJ ulogu (niste upisani u tablicu primatelj).")
+                        new ResponseStatusException(HttpStatus.FORBIDDEN,"Nemate PRIMATELJ ulogu (niste upisani u tablicu primatelj).")
                 );
     }
 
@@ -70,12 +72,12 @@ public class IgrackaService {
     public Igracka create(CreateIgrackaRequest req) {
 
         // Provjere da korisnik nije poslao prazne podatke
-        if (req == null) throw new RuntimeException("Podaci nedostaju.");
-        if (req.naziv == null || req.naziv.isBlank()) throw new RuntimeException("Naziv je obavezan.");
-        if (req.kategorija == null || req.kategorija.isBlank()) throw new RuntimeException("Kategorija je obavezna.");
-        if (req.stanje == null) throw new RuntimeException("Stanje je obavezno.");
+        if (req == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Podaci nedostaju.");
+        if (req.naziv == null || req.naziv.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Naziv je obavezan.");
+        if (req.kategorija == null || req.kategorija.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Kategorija je obavezna.");
+        if (req.stanje == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Stanje je obavezno.");
         if (req.fotografija == null || req.fotografija.isBlank())
-            throw new RuntimeException("Fotografija je obavezna.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Fotografija je obavezna.");
 
         // Provjerimo da je korisnik donator
         Donator donator = currentDonatorOrThrow();
@@ -109,17 +111,17 @@ public class IgrackaService {
 
         // Pronađemo igračku u bazi
         Igracka igracka = igrackaRepo.findById(igrackaId)
-                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,"Igračka ne postoji."));
 
         // Provjera: samo onaj donator koji ju je objavio smije je mijenjati
         Long currentId = currentKorisnikId();
         if (!igracka.getDonator().getId().equals(currentId)) {
-            throw new RuntimeException("Nemate pravo mijenjati ovu igračku.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Nemate pravo mijenjati ovu igračku.");
         }
 
         // Ako je rezervirana, ne smije se više mijenjati
         if (igracka.getStatus() == StatusIgracke.REZERVIRANO) {
-            throw new RuntimeException("Ne možete mijenjati uvjete jer je igračka već rezervirana.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Ne možete mijenjati uvjete jer je igračka već rezervirana.");
         }
 
         // Postavimo nove uvjete
@@ -182,10 +184,10 @@ public class IgrackaService {
         Primatelj primatelj = currentPrimateljOrThrow();
 
         Igracka igracka = igrackaRepo.findById(igrackaId)
-                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,"Igračka ne postoji."));
 
         if (igracka.getStatus() != StatusIgracke.DOSTUPNO) {
-            throw new RuntimeException("Igračka više nije dostupna.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Igračka više nije dostupna.");
         }
 
         // Postaje rezervirana i vežemo primatelja
@@ -204,16 +206,16 @@ public class IgrackaService {
         Long currentId = currentKorisnikId();
 
         Igracka igracka = igrackaRepo.findById(igrackaId)
-                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,"Igračka ne postoji."));
 
         // Mora biti rezervirana
         if (igracka.getStatus() != StatusIgracke.REZERVIRANO || igracka.getPrimatelj() == null) {
-            throw new RuntimeException("Igračka nije rezervirana.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Igračka nije rezervirana.");
         }
 
         // Samo onaj primatelj koji ju je rezervirao smije odustati
         if (!igracka.getPrimatelj().getId().equals(currentId)) {
-            throw new RuntimeException("Samo primatelj koji je rezervirao smije odustati.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Samo primatelj koji je rezervirao smije odustati.");
         }
 
         // Vraćamo igračku u stanje dostupno
@@ -230,16 +232,16 @@ public class IgrackaService {
     public void povuci(Long igrackaId) {
 
         Igracka igracka = igrackaRepo.findById(igrackaId)
-                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,"Igračka ne postoji."));
 
         Long currentId = currentKorisnikId();
 
         if (!igracka.getDonator().getId().equals(currentId)) {
-            throw new RuntimeException("Nemate pravo povući ovu igračku.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Nemate pravo povući ovu igračku.");
         }
 
         if (igracka.getStatus() == StatusIgracke.REZERVIRANO) {
-            throw new RuntimeException("Ne možete povući oglas jer je igračka već rezervirana.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Ne možete povući oglas jer je igračka već rezervirana.");
         }
 
         igrackaRepo.delete(igracka);
@@ -252,10 +254,10 @@ public class IgrackaService {
     @Transactional(readOnly = true)
     public Igracka getById(Long igrackaId) {
         if (igrackaId == null || igrackaId <= 0) {
-            throw new RuntimeException("ID igračke nije validan.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"ID igračke nije validan.");
         }
         return igrackaRepo.findById(igrackaId)
-                .orElseThrow(() -> new RuntimeException("Igračka ne postoji."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,"Igračka ne postoji."));
     }
 
     // Controller zove povuciOglas(), a prava logika je u povuci()

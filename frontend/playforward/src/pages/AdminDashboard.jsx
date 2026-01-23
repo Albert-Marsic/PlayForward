@@ -374,7 +374,7 @@ export default function AdminDashboard() {
                   const organizerEmail = c.primatelj?.email || c.primateljEmail || "-";
                   return (
                     <tr key={c.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4">{c.napredak || "Kampanja"}</td>
+                      <td className="p-4">{c.naziv || c.napredak || "Kampanja"}</td>
                       <td className="p-4 text-sm">{organizerEmail}</td>
                       <td className="p-4 text-sm">
                         {formatDate(c.rokTrajanja)}

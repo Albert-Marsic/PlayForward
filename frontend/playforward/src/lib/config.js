@@ -7,3 +7,6 @@ export const AUTH_ENDPOINTS = {
   profile: `${API_BASE_URL}/api/auth/me`,
   logout: `${API_BASE_URL}/api/auth/logout`,
 };
+
+// TalkJS Chat Configuration
+export const TALKJS_APP_ID = import.meta.env.VITE_TALKJS_APP_ID ?? "tukl3Ea6";

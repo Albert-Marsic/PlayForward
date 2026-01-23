@@ -6,14 +6,16 @@ PlayForward je web platforma koja povezuje donatore igračaka s korisnicima koji
 
 Ideja je objediniti sve korake doniranja igračaka: od registracije donatora i primatelja, objave dostupnih igračaka, vođenja informacija kampanja, lakok pretrazivanja i slicno. Backend servis (Spring Boot) izlaže REST API koji upravlja korisnicima, igračkama, kampanjama i recenzijama, dok frontend (React + Vite) osigurava moderno sučelje s heroj sekcijom, listama igračaka, obrascima za donacije i integriranom Google prijavom. Google OAuth2 i verifikacija putem e-mail tokena pokrivaju različite scenarije autentifikacije, a baza u PostgreSQL-u čuva sve entitete (korisnici, donatori, primatelji, kampanje, popisi igračaka, recenzije).
 
-Web aplikacija na linku: [PlayForward](https://playforward.onrender.com)
+## Deploy (Render)
+- **Frontend**: https://playforward.onrender.com (public URL) i https://playforward-ee8c.onrender.com (Render servis URL).
+- **Backend API**: https://playforward-backend-e5bg.onrender.com (base URL za `/api/*`).
 
 # Funkcijski zahtjevi
 
 - **Registracija i verifikacija korisnika** – klasična registracija (`/api/register`) + verifikacija e-mail tokenom te automatsko kreiranje korisnika preko Google OAuth2 prijave (CustomOAuth2UserService).
 - **Autentifikacija i autorizacija** – Google Sign-In, provjera sesije preko `/api/auth/me`, odjava `/api/auth/logout`, prilagođeni CORS prema `APP_FRONTEND_URL` i sigurnosna pravila definirana u `SecurityConfig` (zaštićeni privatni API-jevi).
 - **Upravljanje korisnicima i ulogama** – entiteti `Korisnik`, `Donator`, `Primatelj` i `Admin` određuju kontekst objave donacija, primanja pomoći i administracije.
-- **Objava i pregled igračaka** – model `Igracka` sprema naziv, fotografiju, stanje, kategoriju, uvjete i status donacije (dostupno/rezervirano), a frontend nudi mock listu, pretraživanje i kartice s detaljima te obrazac za unos nove igračke (upload slike + axios poziv prema `/api/toys`).
+- **Objava i pregled igračaka** – model `Igracka` sprema naziv, fotografiju, stanje, kategoriju, uvjete i status donacije (dostupno/rezervirano), a frontend nudi mock listu, pretraživanje i kartice s detaljima te obrazac za unos nove igračke (upload slike + API poziv prema `/api/toys`).
 - **Upravljanje kampanjama i popisima potreba** – `Kampanja` prati rok trajanja i napredak, dok `PopisIgracaka` definira količine i status svake tražene igračke (potrebno/donirano) za konkretnog primatelja.
 - **Recenzije i reputacija** – entitet `Recenzija` povezuje primatelja i donatora uz ocjenu i komentar, čime se gradi povjerenje i daje povratna informacija o iskustvu doniranja.
 - **UX značajke** – responzivna naslovna stranica (Hero, RecentToys, HowItWorks), stranice za prijavu/registraciju, dashboard s informacijama o Google korisniku, priprema za chat i kampanje te jednostavno pretraživanje u navigaciji.
@@ -21,15 +23,15 @@ Web aplikacija na linku: [PlayForward](https://playforward.onrender.com)
 # Tehnologije
 
 ## Backend
-- Java 17 + Spring Boot 3.5 (Web, Validation, Data JPA, Actuator)
+- Java 17 + Spring Boot 3.5.7 (Web, Validation, Data JPA, Actuator)
 - Spring Security OAuth2 client/resource server i prilagođeni `CustomOAuth2UserService`
 - PostgreSQL baza (`backend/demo/baza_podataka.sql` definira tipove, tablice i inicijalne zapise)
 - Maven build + Maven Wrapper, Dockerfile i `docker.compose.yml` za lokalni deployment
 
 ## Frontend
-- React 19 + Vite 7 + React Router 7
-- Tailwind CSS 4, Radix UI/shadcn komponentni sustav, Lucide ikone
-- Axios za HTTP pozive, Context API (`AuthContext`) za stanje autentifikacije
+- React 19.1 + Vite 7.1 + React Router 7.9
+- Tailwind CSS 4.1, Radix UI/shadcn komponentni sustav, Lucide ikone
+- Fetch helper (`src/lib/api.js`) za HTTP pozive, Context API (`AuthContext`) za stanje autentifikacije
 - Modularne komponente (Hero, RecentToys, HowItWorks, CampaignsTeaser, FinalCTA, Navbar), mock podaci (`src/data/myFakeData.js`) i API helper (`src/api/toys.js`)
 
 ## DevOps i ostalo
@@ -68,7 +70,7 @@ Web aplikacija na linku: [PlayForward](https://playforward.onrender.com)
 ## Frontend
 1. `cd frontend/playforward`
 2. Instalirajte ovisnosti: `npm install`
-3. Kreirajte `.env` ili `.env.local` i definirajte `VITE_API_BASE_URL=http://localhost:8080` (frontend koristi ovaj URL za AuthContext i axios pozive).
+3. Kreirajte `.env` ili `.env.local` i definirajte `VITE_API_BASE_URL=http://localhost:8080` (frontend koristi ovaj URL za AuthContext i API pozive; default je Render backend).
 4. Pokrenite razvojni server: `npm run dev` (Vite podiže aplikaciju na `http://localhost:5173`).
 5. Za produkciju: `npm run build`, a dobiveni `dist/` direktorij poslužite preko Nginxa (osiguran je `nginx.conf` primjer) ili neke druge platforme.
 

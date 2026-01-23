@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { approveRequest, getDonatorRequests, getDonatorToys, withdrawToy } from "@/api/dashboard";
+import { approveRequest, getDonatorRequests, getDonatorToys, markPickedUpRequest, withdrawToy } from "@/api/dashboard";
 
 export default function DonatorDashboard() {
   const [toys, setToys] = useState([]);
@@ -10,6 +10,7 @@ export default function DonatorDashboard() {
   const [error, setError] = useState(null);
   const [withdrawing, setWithdrawing] = useState(null);
   const [approving, setApproving] = useState(null);
+  const [markingPickedUp, setMarkingPickedUp] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -77,6 +78,19 @@ export default function DonatorDashboard() {
     }
   };
 
+  const handlePickedUp = async (requestId) => {
+    try {
+      setMarkingPickedUp(requestId);
+      const updated = await markPickedUpRequest(requestId);
+      setRequests(prev => prev.map(req => (req.id === requestId ? updated : req)));
+      alert("Preuzimanje je potvrđeno");
+    } catch (err) {
+      alert("Greška pri potvrdi preuzimanja: " + err.message);
+    } finally {
+      setMarkingPickedUp(null);
+    }
+  };
+
   if (loading) return <p className="p-6">Učitavanje...</p>;
 
   const dostupne = toys.filter(t => t.status === "DOSTUPNO").length;
@@ -85,7 +99,17 @@ export default function DonatorDashboard() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Moje donacije</h1>
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold">Moje donacije</h1>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" asChild>
+            <Link to="/moje-recenzije">Moje recenzije</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/doniraj">Doniraj novu igračku</Link>
+          </Button>
+        </div>
+      </div>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -140,6 +164,16 @@ export default function DonatorDashboard() {
                         disabled={approving === request.id}
                       >
                         {approving === request.id ? "Odobravam..." : "Odobri"}
+                      </Button>
+                    )}
+                    {request.status === "POSTAGE_PAID" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePickedUp(request.id)}
+                        disabled={markingPickedUp === request.id}
+                      >
+                        {markingPickedUp === request.id ? "Potvrđujem..." : "Označi preuzeto"}
                       </Button>
                     )}
                   </div>

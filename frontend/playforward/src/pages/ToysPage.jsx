@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 //import fakeData from "@/data/myFakeData";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getToys } from "@/api/toys";
 
 export default function ToysPage() {
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+  const [search, setSearch] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState("Sve");
   const [sortBy, setSortBy] = useState("naziv"); // naziv, najnovije, stanje
   const [toys, setToys] = useState([]);
@@ -30,6 +32,22 @@ export default function ToysPage() {
 
     fetchToys();
   }, []);
+
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearch(value);
+    const next = new URLSearchParams(searchParams);
+    if (value.trim()) {
+      next.set("search", value);
+    } else {
+      next.delete("search");
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   // sve kategorije - računanje se čini samo kad se toys promijene
   const categories = useMemo(() => {
@@ -76,7 +94,7 @@ export default function ToysPage() {
           type="text"
           placeholder="Pretraži igračku"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={handleSearchChange}
           className="border rounded px-3 py-2 w-full md:w-1/3"
         />
 

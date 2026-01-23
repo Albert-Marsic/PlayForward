@@ -21,6 +21,12 @@ public class Kampanja {
     @Column(name = "roktrajanja", nullable = false)
     private LocalDate rokTrajanja;
 
+    @Column(name = "naziv", length = 100, nullable = false)
+    private String naziv;
+
+    @Column(name = "opis", length = 500, nullable = false)
+    private String opis;
+
     @Column(name = "napredak", length = 100, nullable = false) // ⟵ u bazi NOT NULL
     private String napredak;
 
@@ -34,10 +40,14 @@ public class Kampanja {
     // get/set
     public Long getId() { return id; }
     public LocalDate getRokTrajanja() { return rokTrajanja; }
+    public String getNaziv() { return naziv; }
+    public String getOpis() { return opis; }
     public String getNapredak() { return napredak; }
     public Primatelj getPrimatelj() { return primatelj; }
     public List<PopisIgracaka> getPopisi() { return popisi; }
     public void setRokTrajanja(LocalDate rokTrajanja) { this.rokTrajanja = rokTrajanja; }
+    public void setNaziv(String naziv) { this.naziv = naziv; }
+    public void setOpis(String opis) { this.opis = opis; }
     public void setNapredak(String napredak) { this.napredak = napredak; }
     public void setPrimatelj(Primatelj primatelj) { this.primatelj = primatelj; }
 

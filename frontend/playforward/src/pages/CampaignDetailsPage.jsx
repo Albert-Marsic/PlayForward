@@ -1,17 +1,18 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getCampaignDetails, calculateCompletionPercentage, requestToyFromCampaign } from "@/api/campaigns";
 import { Calendar, CheckCircle, Clock } from "lucide-react";
 
 export default function CampaignDetailsPage() {
   const { campaignId } = useParams();
-  const navigate = useNavigate();
 
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [requesting, setRequesting] = useState(null);
+  const [donationQuantities, setDonationQuantities] = useState({});
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -32,12 +33,27 @@ export default function CampaignDetailsPage() {
     fetchCampaign();
   }, [campaignId]);
 
-  const handleRequestToy = async (toyId) => {
+  const handleRequestToy = async (toyId, quantity) => {
     try {
       setRequesting(toyId);
-      await requestToyFromCampaign(campaignId, toyId);
-      alert("Zahtjev je poslan! ✅");
-      navigate("/moji-zahtjevi");
+      const updated = await requestToyFromCampaign(campaignId, toyId, quantity);
+      setCampaign(prev => {
+        if (!prev?.popisi) return prev;
+        const updatedPopisi = prev.popisi.map(popis => {
+          const naziv = popis.nazivIgracke || popis.id?.nazivIgracke;
+          if (naziv === updated?.nazivIgracke) {
+            return {
+              ...popis,
+              status: updated.status,
+              doniranoKolicina: updated.doniranoKolicina
+            };
+          }
+          return popis;
+        });
+        return { ...prev, popisi: updatedPopisi };
+      });
+      setDonationQuantities(prev => ({ ...prev, [toyId]: "1" }));
+      alert("Hvala na donaciji! ✅");
     } catch (err) {
       alert("Greška pri slanju zahtjeva: " + err.message);
     } finally {
@@ -57,9 +73,11 @@ export default function CampaignDetailsPage() {
     );
   }
 
-  const percentage = calculateCompletionPercentage(campaign);
+  const percentage = campaign.popisi?.length
+    ? calculateCompletionPercentage(campaign)
+    : (typeof campaign.postotak === "number" ? campaign.postotak : 0);
   const daysLeft = Math.ceil((new Date(campaign.rokTrajanja) - new Date()) / (1000 * 60 * 60 * 24));
-  const isActive = daysLeft > 0;
+  const isActive = campaign.status ? campaign.status === "AKTIVNA" : daysLeft >= 0;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -77,6 +95,10 @@ export default function CampaignDetailsPage() {
             {isActive ? "Aktivna" : "Završena"}
           </span>
         </div>
+
+        {campaign.opis && (
+          <p className="text-gray-700 mb-4">{campaign.opis}</p>
+        )}
 
         <p className="text-gray-600 mb-4">
           Organizator: <strong>{campaign.primatelj?.email || "Nepoznato"}</strong>
@@ -103,7 +125,7 @@ export default function CampaignDetailsPage() {
         <div className="border rounded p-4">
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
             <Clock size={16} />
-            <span>Napredak</span>
+            <span>Prikupljeno</span>
           </div>
           <p className="font-semibold text-lg">{percentage}%</p>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -122,18 +144,32 @@ export default function CampaignDetailsPage() {
         {campaign.popisi && campaign.popisi.length > 0 ? (
           <div className="space-y-3">
             {campaign.popisi.map((popis, idx) => {
-              const toyId = popis.igracka?.id || popis.idIgracka || idx;
+              const itemKey = popis.nazivIgracke || popis.id?.nazivIgracke;
+              const displayName = itemKey
+                || popis.igracka?.naziv
+                || `Igračka #${idx + 1}`;
+              const needed = Number(popis.kolicina) || 0;
+              const donatedRaw = Number.isFinite(popis.doniranoKolicina)
+                ? popis.doniranoKolicina
+                : (popis.status === "DONIRANO" ? needed : 0);
+              const donated = Math.min(Math.max(donatedRaw, 0), needed);
+              const remaining = Math.max(0, needed - donated);
+              const isCollected = remaining === 0 && needed > 0;
+              const rawQuantity = donationQuantities[itemKey] ?? "1";
+              const parsedQuantity = parseInt(rawQuantity, 10);
+              const quantity = Number.isFinite(parsedQuantity) ? parsedQuantity : 0;
+              const isQuantityValid = quantity >= 1 && quantity <= remaining;
               return (
-                <div key={`${campaign.id}-${toyId}`} className="flex items-center justify-between border-b pb-3">
+                <div key={`${campaign.id}-${itemKey || idx}`} className="flex items-center justify-between border-b pb-3">
                   <div className="flex-1">
                     <p className="font-medium">
-                      {popis.igracka?.naziv || `Igračka #${toyId}`}
+                      {displayName}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Potrebno: {popis.kolicina} kom
+                      Prikupljeno: {donated}/{needed} kom
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      {popis.status === "PRIKUPLJENO" && (
+                      {isCollected && (
                         <span className="flex items-center gap-1 text-xs text-green-600">
                           <CheckCircle size={14} />
                           Prikupljeno
@@ -142,14 +178,32 @@ export default function CampaignDetailsPage() {
                     </div>
                   </div>
 
-                  {isActive && popis.status !== "PRIKUPLJENO" && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleRequestToy(toyId)}
-                      disabled={requesting === toyId}
-                    >
-                      {requesting === toyId ? "Slanje..." : "Želim donirati"}
-                    </Button>
+                  {isActive && remaining > 0 && itemKey && (
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          max={remaining}
+                          value={rawQuantity}
+                          onChange={(event) => {
+                            setDonationQuantities(prev => ({
+                              ...prev,
+                              [itemKey]: event.target.value
+                            }));
+                          }}
+                          className="w-20"
+                        />
+                        <span className="text-xs text-gray-500">kom</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleRequestToy(itemKey, quantity)}
+                        disabled={!isQuantityValid || requesting === itemKey}
+                      >
+                        {requesting === itemKey ? "Slanje..." : "Želim donirati"}
+                      </Button>
+                    </div>
                   )}
                 </div>
               );

@@ -12,8 +12,10 @@ import ProfilePage from "./pages/ProfilePage"
 import ChatPage from "./pages/ChatPage"
 import AdminDashboard from "./pages/AdminDashboard"
 import ReviewPage from "./pages/ReviewPage"
+import ReviewsPage from "./pages/ReviewsPage"
 import CampaignsPage from "./pages/CampaignsPage"
 import CampaignDetailsPage from "./pages/CampaignDetailsPage"
+import CreateCampaignPage from "./pages/CreateCampaignPage"
 import ToysPage from "./pages/ToysPage"
 import ToyDetails from "./pages/ToyDetails"
 import Kosarica from "./pages/Cart"
@@ -37,7 +39,9 @@ function App() {
           <Route path="/moje-donacije" element={<DonatorDashboard />} />
           <Route path="/moji-zahtjevi" element={<PrimateljDashboard />} />
           <Route path="/recenzija/:requestId" element={<ReviewPage />} />
+          <Route path="/moje-recenzije" element={<ReviewsPage />} />
           <Route path="/kampanje" element={<CampaignsPage />} />
+          <Route path="/kampanje/novo" element={<CreateCampaignPage />} />
           <Route path="/kampanja/:campaignId" element={<CampaignDetailsPage />} />
           <Route path="/doniraj" element={<Donacija />} />
           <Route path="/igracke" element={<ToysPage />} />

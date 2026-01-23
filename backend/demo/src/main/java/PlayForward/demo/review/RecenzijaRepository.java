@@ -12,6 +12,8 @@ public interface RecenzijaRepository extends JpaRepository<Recenzija, Long> {
 
     List<Recenzija> findByDonator_IdOrderByIdDesc(Long donatorId);
 
+    List<Recenzija> findByPrimatelj_IdOrderByIdDesc(Long primateljId);
+
     void deleteByDonator_Id(Long donatorId);
 
     void deleteByPrimatelj_Id(Long primateljId);

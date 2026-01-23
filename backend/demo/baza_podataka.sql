@@ -21,7 +21,7 @@ END $$;
 
 DO $$
 BEGIN
-    CREATE TYPE status_zahtjeva AS ENUM ('PENDING', 'APPROVED', 'COMPLETED', 'REJECTED', 'WITHDRAWN');
+    CREATE TYPE status_zahtjeva AS ENUM ('PENDING', 'APPROVED', 'POSTAGE_PENDING', 'POSTAGE_PAID', 'PICKED_UP', 'COMPLETED', 'REJECTED', 'WITHDRAWN');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS ZAHTJEV (
     status status_zahtjeva NOT NULL,
     datumZahtjeva TIMESTAMP NOT NULL,
     napomena VARCHAR(200),
+    postage_amount NUMERIC(10,2),
+    paypal_order_id VARCHAR(64),
     IDIgracka INT NOT NULL,
     IDPrimatelj INT NOT NULL,
     IDDonator INT NOT NULL,
@@ -84,6 +86,8 @@ CREATE TABLE IF NOT EXISTS ZAHTJEV (
 CREATE TABLE IF NOT EXISTS KAMPANJA (
     IDKampanja INT GENERATED ALWAYS AS IDENTITY NOT NULL,
     rokTrajanja DATE NOT NULL,
+    naziv VARCHAR(100) NOT NULL,
+    opis VARCHAR(500) NOT NULL,
     napredak VARCHAR(100) NOT NULL,
     IDPrimatelj INT NOT NULL,
     PRIMARY KEY (IDKampanja),
@@ -93,6 +97,7 @@ CREATE TABLE IF NOT EXISTS KAMPANJA (
 CREATE TABLE IF NOT EXISTS POPIS_IGRACAKA (
     nazivIgracke VARCHAR(20) NOT NULL,
     kolicina INT NOT NULL,
+    doniranoKolicina INT NOT NULL DEFAULT 0,
     status status_popisa_igracaka NOT NULL,
     IDKampanja INT NOT NULL,
     PRIMARY KEY (nazivIgracke, IDKampanja),
