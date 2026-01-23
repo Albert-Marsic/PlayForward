@@ -14,7 +14,10 @@ export async function createPayPalOrder(zahtjevId) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ zahtjevId }),
     });
-    if (!response.ok) throw new Error("Greška pri kreiranju PayPal narudžbe");
+    if (!response.ok) {
+      const message = await parseError(response);
+      throw new Error(message || "Greška pri kreiranju PayPal narudžbe");
+    }
     return await response.json();
   } catch (err) {
     console.error("Greška pri kreiranju PayPal narudžbe:", err);
@@ -36,10 +39,30 @@ export async function capturePayPalOrder(zahtjevId, orderId) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ zahtjevId, orderId }),
     });
-    if (!response.ok) throw new Error("Greška pri potvrdi PayPal narudžbe");
+    if (!response.ok) {
+      const message = await parseError(response);
+      throw new Error(message || "Greška pri potvrdi PayPal narudžbe");
+    }
     return await response.json();
   } catch (err) {
     console.error("Greška pri potvrdi PayPal narudžbe:", err);
     throw err;
+  }
+}
+
+async function parseError(response) {
+  try {
+    const data = await response.json();
+    if (data && typeof data === "object") {
+      return data.message || data.error || JSON.stringify(data);
+    }
+    return data;
+  } catch (err) {
+    try {
+      const text = await response.text();
+      return text || `HTTP ${response.status}`;
+    } catch (textErr) {
+      return `HTTP ${response.status}`;
+    }
   }
 }

@@ -63,9 +63,17 @@ public class PostagePaymentService {
             amount = defaultPostageAmount;
             zahtjev.setPostageAmount(amount);
         }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Iznos poštarine mora biti pozitivan.");
+        }
+
+        if (zahtjev.getPaypalOrderId() != null && !zahtjev.getPaypalOrderId().isBlank()) {
+            zahtjevRepo.save(zahtjev);
+            return new PayPalOrderResponse(zahtjev.getPaypalOrderId(), "EXISTING", amount);
+        }
 
         String description = "Postage for request #" + zahtjev.getId();
-        PayPalService.PayPalOrder order = payPalService.createOrder(amount, description);
+        PayPalService.PayPalOrder order = createOrder(amount, description);
 
         zahtjev.setPaypalOrderId(order.id);
         zahtjevRepo.save(zahtjev);
@@ -90,6 +98,13 @@ public class PostagePaymentService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo potvrditi ovaj zahtjev.");
         }
 
+        if (zahtjev.getStatus() == StatusZahtjeva.POSTAGE_PAID) {
+            return zahtjev;
+        }
+        if (zahtjev.getStatus() == StatusZahtjeva.PICKED_UP
+                || zahtjev.getStatus() == StatusZahtjeva.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Zahtjev je već završen.");
+        }
         if (zahtjev.getStatus() == StatusZahtjeva.APPROVED) {
             zahtjev.setStatus(StatusZahtjeva.POSTAGE_PENDING);
         }
@@ -101,11 +116,14 @@ public class PostagePaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PayPal order ID se ne podudara.");
         }
 
-        PayPalService.PayPalCapture capture = payPalService.captureOrder(orderId);
+        PayPalService.PayPalCapture capture = captureOrder(orderId);
         if (capture.status == null || !"COMPLETED".equalsIgnoreCase(capture.status)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PayPal transakcija nije dovršena.");
         }
-        if (capture.currency != null && !"EUR".equalsIgnoreCase(capture.currency)) {
+        if (capture.amount == null || capture.currency == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PayPal nije vratio iznos ili valutu.");
+        }
+        if (!"EUR".equalsIgnoreCase(capture.currency)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Valuta PayPal transakcije nije ispravna.");
         }
 
@@ -133,9 +151,33 @@ public class PostagePaymentService {
             return new BigDecimal("5.00");
         }
         try {
-            return new BigDecimal(amount);
+            BigDecimal parsed = new BigDecimal(amount);
+            if (parsed.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Postage amount must be positive");
+            }
+            return parsed;
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid postage amount", ex);
+        }
+    }
+
+    private PayPalService.PayPalOrder createOrder(BigDecimal amount, String description) {
+        try {
+            return payPalService.createOrder(amount, description);
+        } catch (PayPalApiException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "PayPal greška: " + ex.getMessage(), ex);
+        } catch (RuntimeException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Neuspješno kreiranje PayPal narudžbe.", ex);
+        }
+    }
+
+    private PayPalService.PayPalCapture captureOrder(String orderId) {
+        try {
+            return payPalService.captureOrder(orderId);
+        } catch (PayPalApiException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "PayPal greška: " + ex.getMessage(), ex);
+        } catch (RuntimeException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Neuspješno potvrđivanje PayPal narudžbe.", ex);
         }
     }
 }
