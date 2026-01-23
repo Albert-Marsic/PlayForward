@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Search, Heart } from 'lucide-react'
 import { useState } from 'react'
@@ -7,12 +7,15 @@ import { useCart } from '@/context/CartContext'
 
 export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
   const { user, loading, logout } = useAuth()
   const { cartItems } = useCart()
 
   const handleSearch = (e) => {
     e.preventDefault()
-    console.log('Searching for:', searchQuery)
+    const trimmed = searchQuery.trim()
+    const query = trimmed ? `?search=${encodeURIComponent(trimmed)}` : ''
+    navigate(`/igracke${query}`)
   }
 
   return (

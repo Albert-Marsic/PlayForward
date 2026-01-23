@@ -90,7 +90,12 @@ export default function PrimateljDashboard() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Moji zahtjevi</h1>
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold">Moji zahtjevi</h1>
+        <Button asChild variant="outline">
+          <Link to="/igracke">Novi zahtjev</Link>
+        </Button>
+      </div>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
