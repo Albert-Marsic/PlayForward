@@ -1,12 +1,18 @@
 package PlayForward.demo.campaign;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "popis_igracaka")
 public class PopisIgracaka {
 
     @EmbeddedId
+    @AttributeOverrides({
+            @AttributeOverride(name = "nazivIgracke", column = @Column(name = "nazivigracke")),
+            @AttributeOverride(name = "idKampanja", column = @Column(name = "idkampanja"))
+    })
     private PopisIgracakaId id;
 
     @MapsId("idKampanja")
@@ -17,8 +23,12 @@ public class PopisIgracaka {
     @Column(name = "kolicina", nullable = false)
     private Integer kolicina;
 
+    @Column(name = "doniranokolicina", nullable = false)
+    private Integer doniranoKolicina = 0;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 10, nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "status_popisa_igracaka", nullable = false)
     private StatusPopisa status;
 
     public PopisIgracaka() {}
@@ -32,6 +42,9 @@ public class PopisIgracaka {
     public Integer getKolicina() {
         return kolicina;
     }
+    public Integer getDoniranoKolicina() {
+        return doniranoKolicina;
+    }
     public StatusPopisa getStatus() {
         return status;
     }
@@ -43,6 +56,9 @@ public class PopisIgracaka {
     }
     public void setKolicina(Integer kolicina) {
         this.kolicina = kolicina;
+    }
+    public void setDoniranoKolicina(Integer doniranoKolicina) {
+        this.doniranoKolicina = doniranoKolicina;
     }
     public void setStatus(StatusPopisa status) {
         this.status = status;

@@ -1,5 +1,6 @@
 package PlayForward.demo;
 
+import PlayForward.demo.user.AdminService;
 import PlayForward.demo.user.Korisnik;
 import PlayForward.demo.user.KorisnikRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -13,9 +14,13 @@ import org.springframework.stereotype.Service;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final KorisnikRepository korisnikRepository;
+    private final AdminService adminService;
+    private static final int DISPLAY_NAME_MAX = 20;
 
-    public CustomOAuth2UserService(KorisnikRepository korisnikRepository) {
+    public CustomOAuth2UserService(KorisnikRepository korisnikRepository,
+                                   AdminService adminService) {
         this.korisnikRepository = korisnikRepository;
+        this.adminService = adminService;
     }
 
     @Override
@@ -25,18 +30,28 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         String email = oAuth2User.getAttribute("email");
         if (email != null) {
-            String fullName = oAuth2User.getAttribute("name");
-            if (fullName == null || fullName.isBlank()) {
-                fullName = email;
-            }
+            String fullName = normalizeDisplayName(oAuth2User.getAttribute("name"), email);
 
             Korisnik korisnik = korisnikRepository.findByEmail(email)
                     .orElseGet(Korisnik::new);
             korisnik.setEmail(email);
             korisnik.setImeKorisnik(fullName);
-            korisnikRepository.save(korisnik);
+            Korisnik saved = korisnikRepository.save(korisnik);
+            adminService.ensureAdminFor(saved);
         }
 
         return oAuth2User;
+    }
+
+    private String normalizeDisplayName(String name, String email) {
+        String candidate = (name == null || name.isBlank()) ? email : name;
+        String trimmed = candidate == null ? "" : candidate.trim();
+        if (trimmed.isEmpty()) {
+            trimmed = "Korisnik";
+        }
+        if (trimmed.length() > DISPLAY_NAME_MAX) {
+            return trimmed.substring(0, DISPLAY_NAME_MAX);
+        }
+        return trimmed;
     }
 }

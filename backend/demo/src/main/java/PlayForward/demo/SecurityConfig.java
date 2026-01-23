@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -21,7 +22,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
-    private final String frontendUrl;
+    private final java.util.List<String> frontendOrigins;
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -30,17 +31,20 @@ public class SecurityConfig {
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService,
-                          @Value("${app.frontend.url:http://localhost:5173}") String frontendUrl) {
+                          @Value("${app.frontend.urls:http://localhost:5173}") String frontendUrls) {
         this.customOAuth2UserService = customOAuth2UserService;
-        this.frontendUrl = frontendUrl;
+        this.frontendOrigins = java.util.Arrays.stream(frontendUrls.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(request -> {
+                .cors(cors -> cors.configurationSource(request -> {
                 CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(List.of(frontendUrl));
+                config.setAllowedOrigins(frontendOrigins);
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 config.setAllowedHeaders(List.of("*"));
                 config.setAllowCredentials(true);
@@ -55,6 +59,8 @@ public class SecurityConfig {
                 .requestMatchers("/", "/error", "/api/register", "/api/verify",
                         "/api/auth/config", "/api/auth/me", "/api/auth/logout",
                         "/oauth2/**", "/login/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/config/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/igracke/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
@@ -62,7 +68,7 @@ public class SecurityConfig {
                 .successHandler(oAuth2AuthenticationSuccessHandler)
             )
             .logout(logout -> logout
-                .logoutSuccessUrl(frontendUrl)
+                .logoutSuccessUrl(frontendOrigins.get(0))
                 .deleteCookies("JSESSIONID")
                 .clearAuthentication(true)
                 .invalidateHttpSession(true)

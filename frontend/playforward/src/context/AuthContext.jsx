@@ -38,10 +38,15 @@ export function AuthProvider({ children }) {
 
       const data = await response.json();
       if (data.authenticated) {
+        const isAdmin = data.admin === true;
+        const role = data.role ?? data.uloga ?? (isAdmin ? "ADMIN" : undefined);
         setUser({
           name: data.name ?? data.email,
           email: data.email,
           picture: data.picture,
+          role,
+          uloga: role,
+          admin: isAdmin,
         });
       } else {
         localStorage.removeItem(TOKEN_KEY);

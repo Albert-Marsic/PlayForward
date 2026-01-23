@@ -1,25 +1,25 @@
 const fakeData = [
   {
-    idIgracka: 1,
+    IDIgracka: 1,
     naziv: "Plišani medvjedić",
     kategorija: "Plišane",
     stanje: "novo",
     fotografija: "medo.jpg",
     status: "dostupno",
     uvjeti: "nema",
-    idDonator: 2,
-    idPrimatej: null
+    IDDonator: 11,
+    IDPrimatelj: null,
   },
   {
-    idIgracka: 2,
+    IDIgracka: 2,
     naziv: "Lego set",
     kategorija: "Konstruktivne",
     stanje: "rabljeno",
     fotografija: "lego_set.jpeg",
     status: "dostupno",
     uvjeti: "starije od 3 godine",
-    idDonator: 4,
-    idPrimatej: null
+    IDDonator: 12,
+    IDPrimatelj: null,
   }
 ];
 

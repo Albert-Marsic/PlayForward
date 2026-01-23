@@ -1,0 +1,108 @@
+import { api } from "../lib/api";
+
+/**
+ * Dohvati sve igračke donatora (s JWT tokenima)
+ */
+export async function getDonatorToys() {
+  try {
+    const response = await api("/igracke/moje");
+    if (!response.ok) throw new Error("Greška pri dohvaćanju donacija");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri dohvaćanju mojih donacija:", err);
+    throw err;
+  }
+}
+
+/**
+ * Dohvati sve zahtjeve za donatora
+ */
+export async function getDonatorRequests() {
+  try {
+    const response = await api("/zahtjevi/donator");
+    if (!response.ok) throw new Error("Greška pri dohvaćanju zahtjeva donatora");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri dohvaćanju zahtjeva donatora:", err);
+    throw err;
+  }
+}
+
+/**
+ * Pobvuci oglas (obriši igračku)
+ */
+export async function withdrawToy(toyId) {
+  if (!toyId) throw new Error("ID igračke je obavezan");
+  
+  try {
+    const response = await api(`/igracke/${toyId}/povuci-oglas`, { method: "DELETE" });
+    if (!response.ok) throw new Error("Greška pri povlačenju oglasa");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri povlačenju oglasa:", err);
+    throw err;
+  }
+}
+
+/**
+ * Dohvati sve zahtjeve korisnika (primatelja)
+ * Pretpostavlja da backend ima endpoint koji vraća zahtjeve
+ */
+export async function getMyRequests() {
+  try {
+    const response = await api("/zahtjevi"); // ili /requests
+    if (!response.ok) throw new Error("Greška pri dohvaćanju zahtjeva");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri dohvaćanju mojih zahtjeva:", err);
+    throw err;
+  }
+}
+
+/**
+ * Odustani od zahtjeva (obriši zahtjev)
+ */
+export async function withdrawRequest(requestId) {
+  if (!requestId) throw new Error("ID zahtjeva je obavezan");
+  
+  try {
+    const response = await api(`/zahtjevi/${requestId}`, { method: "DELETE" });
+    if (!response.ok) throw new Error("Greška pri odustajanju");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri odustajanju od zahtjeva:", err);
+    throw err;
+  }
+}
+
+/**
+ * Donator odobrava zahtjev (status -> POSTAGE_PENDING)
+ */
+export async function approveRequest(requestId) {
+  if (!requestId) throw new Error("ID zahtjeva je obavezan");
+
+  try {
+    const response = await api(`/zahtjevi/${requestId}/odobri`, { method: "POST" });
+    if (!response.ok) throw new Error("Greška pri odobravanju zahtjeva");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri odobravanju zahtjeva:", err);
+    throw err;
+  }
+}
+
+/**
+ * Donator potvrđuje preuzimanje (status -> PICKED_UP)
+ */
+export async function markPickedUpRequest(requestId) {
+  if (!requestId) throw new Error("ID zahtjeva je obavezan");
+
+  try {
+    const response = await api(`/zahtjevi/${requestId}/preuzeto`, { method: "POST" });
+    if (!response.ok) throw new Error("Greška pri potvrdi preuzimanja");
+    return await response.json();
+  } catch (err) {
+    console.error("Greška pri potvrdi preuzimanja:", err);
+    throw err;
+  }
+}

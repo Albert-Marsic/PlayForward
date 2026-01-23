@@ -2,7 +2,7 @@
 FROM node:20 AS build
 WORKDIR /app
 
-ENV VITE_API_BASE_URL=https://playforward-backend.onrender.com
+ENV VITE_API_BASE_URL=https://playforward-backend-e5bg.onrender.com
 
 COPY package*.json ./
 RUN npm install

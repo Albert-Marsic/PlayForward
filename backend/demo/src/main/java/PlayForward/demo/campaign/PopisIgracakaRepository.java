@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PopisIgracakaRepository extends JpaRepository<PopisIgracaka, PopisIgracakaId> {
+    void deleteByKampanja_Id(Long kampanjaId);
+    java.util.List<PopisIgracaka> findByKampanja_Id(Long kampanjaId);
 }
