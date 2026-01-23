@@ -61,9 +61,6 @@ export default function Navbar() {
             {user ? (
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/profil">Profil</Link>
-                </Button>
-                <Button variant="ghost" asChild>
                   <Link to="/poruke">Poruke</Link>
                 </Button>
                 <Button variant="ghost" asChild>
