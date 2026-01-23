@@ -105,28 +105,13 @@ Kao studenti sigurno ste upoznati s minimumom prihvatljivog ponašanja definiran
 Očekujemo da ćete poštovati [etički kodeks IEEE-a](https://www.ieee.org/about/corporate/governance/p7-8.html) koji ima važnu obrazovnu funkciju sa svrhom postavljanja najviših standarda integriteta, odgovornog ponašanja i etičkog ponašanja u profesionalnim aktivnosti. Time profesionalna zajednica programskih inženjera definira opća načela koja definiranju  moralni karakter, donošenje važnih poslovnih odluka i uspostavljanje jasnih moralnih očekivanja za sve pripadnike zajenice.
 
 Kodeks ponašanja skup je provedivih pravila koja služe za jasnu komunikaciju očekivanja i zahtjeva za rad zajednice/tima. Njime se jasno definiraju obaveze, prava, neprihvatljiva ponašanja te odgovarajuće posljedice. U ovom repozitoriju dan je jedan od široko prihvaćenih kodeksa ponašanja za rad u zajednici otvorenog koda – prilagodite ga potrebama projektnog tima.
->### Poboljšajte funkcioniranje tima:
->* definirajte načina na koji će rad biti podijeljen među članovima grupe
->* dogovorite kako će grupa međusobno komunicirati
->* držite se unaprijed dogovorenih standarda kod rješavanja sporova
->* implicitno podrazumijevamo da će svi članovi grupe slijediti kodeks ponašanja
- 
->###  Prijava problema
->Najgore što se može dogoditi je da netko šuti kad postoje problemi. Postoji nekoliko koraka koje možete poduzeti kako biste riješili sukobe i probleme:
->* Obratite se direktno mentoru ili e-poštom (npr. [vlado.sruk@fer.hr](mailto:vlado.sruk@fer.hr)) kako bi se u povjerenju dogovorili potrebni koraci.
->* Razgovarajte s asistentom jer ima najbolji uvid u dinamiku tima – zajedno možete pronaći rješenje i spriječiti daljnje probleme.
->* Ako se osjećate ugodno, pokušajte manji incident riješiti direktno s članom tima u privatnom razgovoru.
+
 
 # 📝 Licenca
 Važeća (1)
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
 
 Ovaj repozitorij sadrži otvorene obrazovne sadržaje i licenciran je prema pravilima Creative Commons licence koja omogućava preuzimanje i dijeljenje djela uz uvjet navođenja autora, nekorištenja u komercijalne svrhe te dijeljenja pod istim uvjetima ([Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License HR][cc-by-nc-sa]).
->
-> ### Napomena:
->
-> Svi paketi distribuiraju se pod vlastitim licencama.
-> Svi upotrijebljeni materijali (slike, modeli, animacije, ...) distribuiraju se pod vlastitim licencama.
 
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
 
