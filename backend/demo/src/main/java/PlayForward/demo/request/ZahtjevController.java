@@ -50,4 +50,9 @@ public class ZahtjevController {
     public ResponseEntity<Zahtjev> approve(@PathVariable Long id) {
         return ResponseEntity.ok(zahtjevService.approveForCurrentDonator(id));
     }
+
+    @PostMapping("/{id}/odbij")
+    public ResponseEntity<Zahtjev> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(zahtjevService.rejectForCurrentDonator(id));
+    }
 }
