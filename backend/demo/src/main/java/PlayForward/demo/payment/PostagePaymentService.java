@@ -67,9 +67,24 @@ public class PostagePaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Iznos poštarine mora biti pozitivan.");
         }
 
-        if (zahtjev.getPaypalOrderId() != null && !zahtjev.getPaypalOrderId().isBlank()) {
-            zahtjevRepo.save(zahtjev);
-            return new PayPalOrderResponse(zahtjev.getPaypalOrderId(), "EXISTING", amount);
+        String existingOrderId = zahtjev.getPaypalOrderId();
+        if (existingOrderId != null && !existingOrderId.isBlank()) {
+            PayPalService.PayPalOrder existingOrder = fetchExistingOrder(existingOrderId);
+            if (existingOrder != null) {
+                if (isReusableOrderStatus(existingOrder.status)) {
+                    zahtjevRepo.save(zahtjev);
+                    return new PayPalOrderResponse(existingOrderId, existingOrder.status, amount);
+                }
+                if (isCompletedOrderStatus(existingOrder.status)) {
+                    if (zahtjev.getStatus() != StatusZahtjeva.POSTAGE_PAID) {
+                        zahtjev.setStatus(StatusZahtjeva.POSTAGE_PAID);
+                        zahtjevRepo.save(zahtjev);
+                    }
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Poštarina je već plaćena. Osvježite stranicu.");
+                }
+            }
+            zahtjev.setPaypalOrderId(null);
         }
 
         String description = "Postage for request #" + zahtjev.getId();
@@ -179,5 +194,37 @@ public class PostagePaymentService {
         } catch (RuntimeException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Neuspješno potvrđivanje PayPal narudžbe.", ex);
         }
+    }
+
+    private PayPalService.PayPalOrder fetchExistingOrder(String orderId) {
+        try {
+            return payPalService.getOrder(orderId);
+        } catch (PayPalApiException ex) {
+            if (ex.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
+                return null;
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "PayPal greška: " + ex.getMessage(), ex);
+        } catch (RuntimeException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Neuspješno dohvaćanje PayPal narudžbe.", ex);
+        }
+    }
+
+    private boolean isReusableOrderStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return false;
+        }
+        switch (status.trim().toUpperCase()) {
+            case "CREATED":
+            case "APPROVED":
+            case "PAYER_ACTION_REQUIRED":
+            case "SAVED":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isCompletedOrderStatus(String status) {
+        return status != null && "COMPLETED".equalsIgnoreCase(status.trim());
     }
 }

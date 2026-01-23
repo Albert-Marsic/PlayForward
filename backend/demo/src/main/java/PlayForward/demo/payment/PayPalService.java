@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -78,6 +79,28 @@ public class PayPalService {
         }
         String status = textOrNull(body.get("status"));
         return new PayPalOrder(id, status);
+    }
+
+    public PayPalOrder getOrder(String orderId) {
+        if (orderId == null || orderId.isBlank()) {
+            throw new IllegalArgumentException("PayPal order id is required");
+        }
+
+        String token = getAccessToken();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<JsonNode> response = getForEntity(
+                baseUrl + "/v2/checkout/orders/" + orderId,
+                entity
+        );
+
+        JsonNode body = requireBody(response);
+        String id = textOrNull(body.get("id"));
+        String status = textOrNull(body.get("status"));
+        return new PayPalOrder(id != null ? id : orderId, status);
     }
 
     public PayPalCapture captureOrder(String orderId) {
@@ -159,8 +182,16 @@ public class PayPalService {
     }
 
     private ResponseEntity<JsonNode> postForEntity(String url, HttpEntity<?> entity) {
+        return exchange(url, HttpMethod.POST, entity);
+    }
+
+    private ResponseEntity<JsonNode> getForEntity(String url, HttpEntity<?> entity) {
+        return exchange(url, HttpMethod.GET, entity);
+    }
+
+    private ResponseEntity<JsonNode> exchange(String url, HttpMethod method, HttpEntity<?> entity) {
         try {
-            return restTemplate.postForEntity(url, entity, JsonNode.class);
+            return restTemplate.exchange(url, method, entity, JsonNode.class);
         } catch (RestClientResponseException ex) {
             String message = extractErrorMessage(ex);
             throw new PayPalApiException(ex.getRawStatusCode(), message);
