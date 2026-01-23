@@ -1,10 +1,15 @@
 package PlayForward.demo.user;
 
+import PlayForward.demo.campaign.Kampanja;
 import PlayForward.demo.campaign.KampanjaRepository;
 import PlayForward.demo.campaign.PopisIgracakaRepository;
+import PlayForward.demo.listing.Igracka;
 import PlayForward.demo.listing.IgrackaRepository;
+import PlayForward.demo.listing.StatusIgracke;
+import PlayForward.demo.request.Zahtjev;
 import PlayForward.demo.request.ZahtjevRepository;
 import PlayForward.demo.review.RecenzijaRepository;
+import PlayForward.demo.user.dto.AdminDonationView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
@@ -117,4 +122,70 @@ class AdminUserServiceTest {
                 () -> service.deleteCampaignById(1L));
         assertEquals(404, ex.getStatusCode().value());
     }
+    @Test
+    void testListUsers_limitExceedsMax() {
+        Korisnik k = new Korisnik();
+        k.setId(1L);
+        k.setEmail("user@example.com");
+        when(korisnikRepo.findAll(Sort.by(Sort.Direction.ASC, "id"))).thenReturn(List.of(k));
+        when(donatorRepo.findAll()).thenReturn(Collections.emptyList());
+        when(primateljRepo.findAll()).thenReturn(Collections.emptyList());
+
+        List<?> users = service.listUsers(1000, 0);
+        assertEquals(1, users.size());
+    }
+
+    @Test
+    void testListDonations_nullStatusAndNullDonator() {
+        Igracka igracka = new Igracka();
+        igracka.setId(1L);
+        igracka.setNaziv("Test Toy");
+        igracka.setStatus(null);
+        igracka.setDonator(null);
+
+        when(igrackaRepo.findAll(Sort.by(Sort.Direction.ASC, "id"))).thenReturn(List.of(igracka));
+
+        var donations = service.listDonations(10, 0);
+        assertEquals(1, donations.size());
+        assertNull(((AdminDonationView) donations.get(0)).status);
+        assertNull(((AdminDonationView) donations.get(0)).donator.email);
+    }
+
+    @Test
+    void testGetStats_withActiveDonationsAndCampaigns() {
+        Igracka igracka = new Igracka();
+        igracka.setStatus(StatusIgracke.DOSTUPNO);
+        Kampanja kampanja = new Kampanja();
+        kampanja.setRokTrajanja(java.time.LocalDate.now().plusDays(1));
+
+        when(korisnikRepo.count()).thenReturn(1L);
+        when(zahtjevRepo.count()).thenReturn(2L);
+        when(igrackaRepo.findAll()).thenReturn(List.of(igracka));
+        when(kampanjaRepo.findAll()).thenReturn(List.of(kampanja));
+
+        var stats = service.getStats();
+        assertEquals(1L, stats.get("ukupnoKorisnika"));
+        assertEquals(1L, stats.get("aktivnihDonacija"));
+        assertEquals(1L, stats.get("aktivnihKampanja"));
+        assertEquals(2L, stats.get("ukupnoZahtjeva"));
+    }
+
+    @Test
+    void testDeleteDonationById_withExistingRequests() {
+        Igracka igracka = new Igracka();
+        igracka.setId(1L);
+
+        Zahtjev zahtjev = new Zahtjev();
+        zahtjev.setId(10L);
+
+        when(igrackaRepo.findById(1L)).thenReturn(Optional.of(igracka));
+        when(zahtjevRepo.findByIgracka_Id(1L)).thenReturn(List.of(zahtjev));
+
+        service.deleteDonationById(1L);
+
+        verify(recenzijaRepo).deleteByZahtjev_IdIn(List.of(10L));
+        verify(zahtjevRepo).deleteAll(List.of(zahtjev));
+        verify(igrackaRepo).delete(igracka);
+    }
+
 }
