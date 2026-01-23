@@ -3,9 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { createCheckoutRequest } from "@/api/request";
-import PayPalButton from "@/components/PayPalButton";
 import { useNotification } from "@/context/NotificationContext";
-import { DollarSign } from "lucide-react";
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart();
@@ -22,8 +20,6 @@ export default function CheckoutPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("direct"); // direct ili paypal
-  const [showPayPal, setShowPayPal] = useState(false);
 
   const totalPrice = cartItems
     .reduce((total, toy) => total + parseFloat(toy.cijena || 0), 0)
@@ -45,11 +41,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (paymentMethod === "paypal") {
-      setShowPayPal(true);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
@@ -67,26 +58,6 @@ export default function CheckoutPage() {
       setError("Greška pri slanju zahtjeva: " + err.message);
       console.error(err);
       addNotification("Greška pri slanju zahtjeva", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePayPalSuccess = async (details) => {
-    try {
-      setLoading(true);
-      
-      // Dohvati samo ID-ove igračaka
-      const toyIds = cartItems.map(toy => toy.id || toy.idIgracka);
-
-      // Pošalji zahtjev na backend
-      await createCheckoutRequest(toyIds);
-
-      clearCart();
-      navigate("/moji-zahtjevi");
-    } catch (err) {
-      setError("Greška pri slanju zahtjeva: " + err.message);
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -196,60 +167,19 @@ export default function CheckoutPage() {
           />
         </div>
 
-        {/* Metoda plaćanja */}
-        <div className="border rounded p-4 my-4">
-          <h3 className="font-semibold mb-3">Odaberite metodu plaćanja</h3>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                value="direct"
-                checked={paymentMethod === "direct"}
-                onChange={(e) => {
-                  setPaymentMethod(e.target.value);
-                  setShowPayPal(false);
-                }}
-              />
-              <span>Direktan zahtjev (bez plaćanja)</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                value="paypal"
-                checked={paymentMethod === "paypal"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              <DollarSign size={16} />
-              <span>PayPal (dostava je plaćena)</span>
-            </label>
-          </div>
-        </div>
-
-        {/* PayPal gumb */}
-        {paymentMethod === "paypal" && showPayPal && (
-          <div className="border rounded p-4 bg-blue-50">
-            <h3 className="font-semibold mb-3">Plaćanje dostave</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Iznos dostave: <strong>{totalPrice} €</strong>
-            </p>
-            <PayPalButton
-              amount={parseFloat(totalPrice)}
-              description={`Dostava igračaka - ${cartItems.length} kom`}
-              requestId={null}
-              onSuccess={handlePayPalSuccess}
-              onError={(err) => setError("PayPal greška: " + err.message)}
-            />
-          </div>
-        )}
-
         <div className="flex justify-between mt-6">
           <Button variant="outline" asChild>
             <Link to="/kosarica">← Natrag</Link>
           </Button>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? "Slanje..." : paymentMethod === "paypal" ? "Nastavi na PayPal" : "Potvrdi zahtjev"}
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            <p className="text-xs text-gray-500">
+              Poštarina se plaća nakon što donator odobri zahtjev.
+            </p>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Slanje..." : "Potvrdi zahtjev"}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

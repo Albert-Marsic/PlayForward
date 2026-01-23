@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { approveRequest, getDonatorRequests, getDonatorToys, withdrawToy } from "@/api/dashboard";
+import { approveRequest, getDonatorRequests, getDonatorToys, markPickedUpRequest, withdrawToy } from "@/api/dashboard";
 
 export default function DonatorDashboard() {
   const [toys, setToys] = useState([]);
@@ -10,6 +10,7 @@ export default function DonatorDashboard() {
   const [error, setError] = useState(null);
   const [withdrawing, setWithdrawing] = useState(null);
   const [approving, setApproving] = useState(null);
+  const [markingPickedUp, setMarkingPickedUp] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -74,6 +75,19 @@ export default function DonatorDashboard() {
       alert("Greška pri odobravanju zahtjeva: " + err.message);
     } finally {
       setApproving(null);
+    }
+  };
+
+  const handlePickedUp = async (requestId) => {
+    try {
+      setMarkingPickedUp(requestId);
+      const updated = await markPickedUpRequest(requestId);
+      setRequests(prev => prev.map(req => (req.id === requestId ? updated : req)));
+      alert("Preuzimanje je potvrđeno");
+    } catch (err) {
+      alert("Greška pri potvrdi preuzimanja: " + err.message);
+    } finally {
+      setMarkingPickedUp(null);
     }
   };
 
@@ -145,6 +159,16 @@ export default function DonatorDashboard() {
                         disabled={approving === request.id}
                       >
                         {approving === request.id ? "Odobravam..." : "Odobri"}
+                      </Button>
+                    )}
+                    {request.status === "POSTAGE_PAID" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePickedUp(request.id)}
+                        disabled={markingPickedUp === request.id}
+                      >
+                        {markingPickedUp === request.id ? "Potvrđujem..." : "Označi preuzeto"}
                       </Button>
                     )}
                   </div>

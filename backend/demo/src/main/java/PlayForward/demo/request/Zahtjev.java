@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,6 +29,12 @@ public class Zahtjev {
 
     @Column(name = "napomena", length = 200)
     private String napomena;
+
+    @Column(name = "postage_amount", precision = 10, scale = 2)
+    private BigDecimal postageAmount;
+
+    @Column(name = "paypal_order_id", length = 64)
+    private String paypalOrderId;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "idigracka", nullable = false)
@@ -59,6 +66,14 @@ public class Zahtjev {
         return napomena;
     }
 
+    public BigDecimal getPostageAmount() {
+        return postageAmount;
+    }
+
+    public String getPaypalOrderId() {
+        return paypalOrderId;
+    }
+
     public Igracka getIgracka() {
         return igracka;
     }
@@ -81,6 +96,14 @@ public class Zahtjev {
 
     public void setNapomena(String napomena) {
         this.napomena = napomena;
+    }
+
+    public void setPostageAmount(BigDecimal postageAmount) {
+        this.postageAmount = postageAmount;
+    }
+
+    public void setPaypalOrderId(String paypalOrderId) {
+        this.paypalOrderId = paypalOrderId;
     }
 
     public void setIgracka(Igracka igracka) {

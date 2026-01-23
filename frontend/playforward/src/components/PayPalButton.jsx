@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNotification } from "@/context/NotificationContext";
-import { executePayPalPayment } from "@/api/paypal";
+import { capturePayPalOrder, createPayPalOrder } from "@/api/paypal";
 
-export default function PayPalButton({ amount, description, requestId, onSuccess, onError }) {
+export default function PayPalButton({ requestId, onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
   const paypalContainerRef = useRef(null);
   const { addNotification } = useNotification();
@@ -15,34 +15,28 @@ export default function PayPalButton({ amount, description, requestId, onSuccess
     }
 
     // Renderuj PayPal gumb
+    if (!requestId) {
+      addNotification("Nedostaje ID zahtjeva za plaćanje", "error");
+      return;
+    }
+
+    if (paypalContainerRef.current) {
+      paypalContainerRef.current.innerHTML = "";
+    }
+
     window.paypal
       .Buttons({
-        createOrder: (data, actions) => {
-          return actions.order.create({
-            purchase_units: [
-              {
-                amount: {
-                  value: amount.toString(),
-                  currency_code: "EUR",
-                },
-                description: description,
-              },
-            ],
-          });
+        createOrder: async () => {
+          const order = await createPayPalOrder(requestId);
+          return order.orderId;
         },
 
-        onApprove: async (data, actions) => {
+        onApprove: async (data) => {
           try {
             setLoading(true);
-
-            // Detaljno o sredstvima
-            const details = await actions.order.capture();
-
-            // Pošalji na backend
-            await executePayPalPayment(details.id, data.payerID);
-
-            addNotification("Plaćanje je uspješno! 🎉", "success");
-            if (onSuccess) onSuccess(details);
+            const updated = await capturePayPalOrder(requestId, data.orderID);
+            addNotification("Poštarina je uspješno plaćena! 🎉", "success");
+            if (onSuccess) onSuccess(updated);
           } catch (err) {
             console.error("Greška pri obradi plaćanja:", err);
             addNotification("Greška pri obradi plaćanja", "error");
@@ -63,7 +57,7 @@ export default function PayPalButton({ amount, description, requestId, onSuccess
         },
       })
       .render(paypalContainerRef.current);
-  }, [amount, description, addNotification, onSuccess, onError]);
+  }, [requestId, addNotification, onSuccess, onError]);
 
   return (
     <div ref={paypalContainerRef} className="my-4">
