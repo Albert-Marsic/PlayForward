@@ -59,6 +59,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/error", "/api/register", "/api/verify",
                         "/api/auth/config", "/api/auth/me", "/api/auth/logout",
                         "/oauth2/**", "/login/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/config/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/igracke/**").permitAll()
                 .anyRequest().authenticated()
             )

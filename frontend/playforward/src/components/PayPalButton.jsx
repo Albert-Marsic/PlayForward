@@ -5,47 +5,53 @@ import { API_BASE_URL } from "@/lib/config";
 
 export default function PayPalButton({ requestId, onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const paypalContainerRef = useRef(null);
   const { addNotification } = useNotification();
 
   useEffect(() => {
     let cancelled = false;
+    setStatusMessage("");
     const resolvePayPalClientId = async () => {
       if (import.meta.env.VITE_PAYPAL_CLIENT_ID) {
-        return import.meta.env.VITE_PAYPAL_CLIENT_ID;
+        return { clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID, errorMessage: "" };
       }
       try {
         const response = await fetch(`${API_BASE_URL}/api/config/paypal-client-id`);
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          return { clientId: "", errorMessage: "PayPal konfiguracija nije dostupna" };
         }
         const data = await response.json();
-        return data?.clientId ?? "";
+        const clientId = data?.clientId ?? "";
+        return {
+          clientId,
+          errorMessage: clientId ? "" : "PayPal nije konfiguriran",
+        };
       } catch (err) {
         console.warn("Neuspješno dohvaćanje PayPal client ID-a:", err);
-        return "";
+        return { clientId: "", errorMessage: "PayPal konfiguracija nije dostupna" };
       }
     };
 
-    const loadPayPalSdk = () => {
-      if (window.paypal) return Promise.resolve();
+    const loadPayPalSdk = async () => {
+      if (window.paypal) return { status: "ready" };
       const existingScript = document.querySelector("script[src*='paypal.com/sdk/js']");
       if (!existingScript) {
-        return resolvePayPalClientId().then((paypalClientId) => {
-          if (!paypalClientId) {
-            return Promise.reject(new Error("PayPal client ID nije postavljen"));
-          }
-          const script = document.createElement("script");
-          script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=EUR`;
-          script.async = true;
-          return new Promise((resolve, reject) => {
-            script.onload = () => resolve();
-            script.onerror = () => reject(new Error("PayPal SDK se nije mogao učitati"));
-            document.body.appendChild(script);
-          });
+        const { clientId, errorMessage } = await resolvePayPalClientId();
+        if (!clientId) {
+          return { status: "missing_config", message: errorMessage || "PayPal nije konfiguriran" };
+        }
+        const script = document.createElement("script");
+        script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=EUR`;
+        script.async = true;
+        await new Promise((resolve, reject) => {
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("PayPal SDK se nije mogao učitati"));
+          document.body.appendChild(script);
         });
+        return { status: "ready" };
       }
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         if (window.paypal) {
           resolve();
           return;
@@ -62,6 +68,7 @@ export default function PayPalButton({ requestId, onSuccess, onError }) {
           reject(new Error("PayPal SDK se nije mogao učitati"));
         }, { once: true });
       });
+      return { status: "ready" };
     };
 
     const renderButton = async () => {
@@ -71,8 +78,12 @@ export default function PayPalButton({ requestId, onSuccess, onError }) {
       }
 
       try {
-        await loadPayPalSdk();
+        const sdkStatus = await loadPayPalSdk();
         if (cancelled) return;
+        if (sdkStatus?.status === "missing_config") {
+          setStatusMessage(sdkStatus.message);
+          return;
+        }
         if (!window.paypal) {
           throw new Error("PayPal nije dostupan");
         }
@@ -129,6 +140,9 @@ export default function PayPalButton({ requestId, onSuccess, onError }) {
 
   return (
     <div ref={paypalContainerRef} className="my-4">
+      {statusMessage && (
+        <p className="text-center text-sm text-amber-600">{statusMessage}</p>
+      )}
       {loading && <p className="text-center text-gray-600">Obrada plaćanja...</p>}
     </div>
   );
