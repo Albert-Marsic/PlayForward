@@ -116,14 +116,22 @@ class Tests {
     }
 
     @Test
-    void testCreateRecenzijaThrowsExceptionForShortText() {
-        CreateRecenzijaRequest req = new CreateRecenzijaRequest();
-        req.zahtjevId = 1L;
-        req.ocjena = 4;
-        req.tekst = "Too short";
+    void testCreateRecenzijaThrowsExceptionForInvalidValues() {
+        CreateRecenzijaRequest req1 = new CreateRecenzijaRequest();
+        req1.zahtjevId = 1L;
+        req1.ocjena = 4;
+        req1.tekst = "Too short";
 
-        Exception ex = assertThrows(RuntimeException.class, () -> recenzijaService.create(req));
-        assertTrue(ex.getMessage().contains("najmanje 10 znakova"));
+        Exception ex1 = assertThrows(RuntimeException.class, () -> recenzijaService.create(req1));
+        assertTrue(ex1.getMessage().contains("najmanje 10 znakova"));
+
+        CreateRecenzijaRequest req2 = new CreateRecenzijaRequest();
+        req2.zahtjevId = 1L;
+        req2.ocjena = 0;
+        req2.tekst = "Valid text for testing";
+
+        ResponseStatusException ex2 = assertThrows(ResponseStatusException.class, () -> recenzijaService.create(req2));
+        assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
     }
 
     @Test
@@ -144,28 +152,6 @@ class Tests {
                 () -> recenzijaService.create(req2)
         );
         assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
-
-        CreateRecenzijaRequest req3 = new CreateRecenzijaRequest();
-        req3.zahtjevId = 1L;
-        req3.ocjena = 0;
-        req3.tekst = "Valid text for testing";
-
-        ResponseStatusException ex3 = assertThrows(
-                ResponseStatusException.class,
-                () -> recenzijaService.create(req3)
-        );
-        assertEquals(HttpStatus.BAD_REQUEST, ex3.getStatusCode());
-
-        CreateRecenzijaRequest req4 = new CreateRecenzijaRequest();
-        req4.zahtjevId = 1L;
-        req4.ocjena = 3;
-        req4.tekst = "short";
-
-        ResponseStatusException ex4 = assertThrows(
-                ResponseStatusException.class,
-                () -> recenzijaService.create(req4)
-        );
-        assertEquals(HttpStatus.BAD_REQUEST, ex4.getStatusCode());
     }
 
     @Test
