@@ -29,4 +29,6 @@ public class Donator {
     public void setKorisnik(Korisnik korisnik) {
         this.korisnik = korisnik;
     }
+
+    public void setId(long l) { this.id = l; }
 }

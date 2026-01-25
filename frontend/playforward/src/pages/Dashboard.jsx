@@ -80,6 +80,7 @@ export default function Dashboard() {
 
       const data = await response.json();
       setRole(data.role ?? selectedRole);
+      window.location.reload()
     } catch (error) {
       console.error("Failed to save role", error);
       setRoleError("Došlo je do pogreške prilikom spremanja uloge.");

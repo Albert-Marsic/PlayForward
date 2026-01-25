@@ -38,4 +38,6 @@ public class Korisnik {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    public void setId(Long l) { this.id = l; }
 }

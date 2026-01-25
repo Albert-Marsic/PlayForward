@@ -194,7 +194,7 @@ export default function ToyDetails() {
       {/* Request Note Input (za RECIPIENT) */}
       {user?.role === "RECIPIENT" && toy.status !== "rezervirano" && (
         <div className="mb-4 p-4 border rounded-lg bg-gray-50">
-          <label className="block text-sm font-medium mb-2">Dodatna napomena (opciono)</label>
+          <label className="block text-sm font-medium mb-2">Dodatna napomena (opcionalno)</label>
           <textarea
             className="w-full p-2 border rounded"
             rows="3"
