@@ -205,7 +205,24 @@ public class ZahtjevService {
         }
 
         zahtjev.setStatus(StatusZahtjeva.PICKED_UP);
-        return zahtjevRepo.save(zahtjev);
+        Zahtjev savedZahtjev = zahtjevRepo.save(zahtjev);
+
+        // Notify recipient that pickup was confirmed
+        Primatelj primatelj = zahtjev.getPrimatelj();
+        Igracka igracka = zahtjev.getIgracka();
+        if (primatelj != null && primatelj.getKorisnik() != null
+                && primatelj.getKorisnik().getEmail() != null) {
+            String donatorIme = (donator.getKorisnik() != null && donator.getKorisnik().getImeKorisnik() != null)
+                    ? donator.getKorisnik().getImeKorisnik()
+                    : "Donator";
+            String igrackaNaziv = igracka != null ? igracka.getNaziv() : "Igračka";
+            emailService.sendPickupConfirmedNotificationAsync(
+                    primatelj.getKorisnik().getEmail(),
+                    donatorIme,
+                    igrackaNaziv);
+        }
+
+        return savedZahtjev;
     }
 
     @Transactional
@@ -239,7 +256,61 @@ public class ZahtjevService {
         igracka.setPrimatelj(zahtjev.getPrimatelj());
         igrackaRepo.save(igracka);
 
-        return zahtjevRepo.save(zahtjev);
+        Zahtjev savedZahtjev = zahtjevRepo.save(zahtjev);
+
+        // Notify recipient that their request was approved
+        Primatelj primatelj = zahtjev.getPrimatelj();
+        if (primatelj != null && primatelj.getKorisnik() != null
+                && primatelj.getKorisnik().getEmail() != null) {
+            String donatorIme = (donator.getKorisnik() != null && donator.getKorisnik().getImeKorisnik() != null)
+                    ? donator.getKorisnik().getImeKorisnik()
+                    : "Donator";
+            emailService.sendApprovalNotificationAsync(
+                    primatelj.getKorisnik().getEmail(),
+                    donatorIme,
+                    igracka.getNaziv());
+        }
+
+        return savedZahtjev;
+    }
+
+    @Transactional
+    public Zahtjev rejectForCurrentDonator(Long zahtjevId) {
+        if (zahtjevId == null || zahtjevId <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID zahtjeva nije validan.");
+        }
+
+        Donator donator = currentDonatorOrThrow();
+        Zahtjev zahtjev = zahtjevRepo.findById(zahtjevId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zahtjev ne postoji."));
+
+        if (!zahtjev.getDonator().getId().equals(donator.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nemate pravo odbiti ovaj zahtjev.");
+        }
+
+        if (zahtjev.getStatus() != StatusZahtjeva.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Samo zahtjevi na čekanju mogu biti odbijeni.");
+        }
+
+        zahtjev.setStatus(StatusZahtjeva.REJECTED);
+        Zahtjev savedZahtjev = zahtjevRepo.save(zahtjev);
+
+        // Notify recipient that their request was rejected
+        Primatelj primatelj = zahtjev.getPrimatelj();
+        Igracka igracka = zahtjev.getIgracka();
+        if (primatelj != null && primatelj.getKorisnik() != null
+                && primatelj.getKorisnik().getEmail() != null) {
+            String donatorIme = (donator.getKorisnik() != null && donator.getKorisnik().getImeKorisnik() != null)
+                    ? donator.getKorisnik().getImeKorisnik()
+                    : "Donator";
+            String igrackaNaziv = igracka != null ? igracka.getNaziv() : "Igračka";
+            emailService.sendRejectionNotificationAsync(
+                    primatelj.getKorisnik().getEmail(),
+                    donatorIme,
+                    igrackaNaziv);
+        }
+
+        return savedZahtjev;
     }
 
     @Transactional(readOnly = true)

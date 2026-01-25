@@ -18,8 +18,6 @@ import CampaignDetailsPage from "./pages/CampaignDetailsPage"
 import CreateCampaignPage from "./pages/CreateCampaignPage"
 import ToysPage from "./pages/ToysPage"
 import ToyDetails from "./pages/ToyDetails"
-import Kosarica from "./pages/Cart"
-import Kupovina from "./pages/CheckoutPage"
 import './App.css'
 
 function App() {
@@ -46,8 +44,6 @@ function App() {
           <Route path="/doniraj" element={<Donacija />} />
           <Route path="/igracke" element={<ToysPage />} />
           <Route path="/igracke/:id" element={<ToyDetails />}/>
-          <Route path="/kosarica" element={<Kosarica />}/>
-          <Route path="/kupovina" element={<Kupovina />}/>
           <Route path="*" element={<Page_404 />}/>
         </Routes>
       </main>

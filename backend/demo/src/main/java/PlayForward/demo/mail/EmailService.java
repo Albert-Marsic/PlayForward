@@ -124,4 +124,122 @@ public class EmailService {
             log.warn("Neuspjelo slanje emaila za odustajanje.", ex);
         }
     }
+
+    @Async
+    public void sendApprovalNotificationAsync(String to, String donatorIme, String igrackaNaziv) {
+        if (to == null || to.isBlank()) {
+            log.warn("Email primatelja nije definiran, preskacem slanje obavijesti o odobrenju.");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            if (fromAddress != null) {
+                message.setFrom(fromAddress);
+            }
+            message.setSubject("Vaš zahtjev je odobren - PlayForward");
+
+            String tekst = "Poštovani,\n\n" +
+                    "Vaš zahtjev za igračku \"" + (igrackaNaziv != null ? igrackaNaziv : "(nepoznato)") +
+                    "\" je odobren od strane donatora " + (donatorIme != null ? donatorIme : "(nepoznat)") + ".\n\n" +
+                    "Sljedeći korak je plaćanje poštarine putem PayPal-a na PlayForward platformi.\n\n" +
+                    "Srdačan pozdrav,\nPlayForward tim";
+
+            message.setText(tekst);
+            mailSender.send(message);
+            log.info("Poslan email primatelju: {} za odobrenje zahtjeva", to);
+        } catch (Exception ex) {
+            log.warn("Neuspjelo slanje emaila za odobrenje.", ex);
+        }
+    }
+
+    @Async
+    public void sendRejectionNotificationAsync(String to, String donatorIme, String igrackaNaziv) {
+        if (to == null || to.isBlank()) {
+            log.warn("Email primatelja nije definiran, preskacem slanje obavijesti o odbijanju.");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            if (fromAddress != null) {
+                message.setFrom(fromAddress);
+            }
+            message.setSubject("Vaš zahtjev je odbijen - PlayForward");
+
+            String tekst = "Poštovani,\n\n" +
+                    "Nažalost, Vaš zahtjev za igračku \"" + (igrackaNaziv != null ? igrackaNaziv : "(nepoznato)") +
+                    "\" je odbijen od strane donatora " + (donatorIme != null ? donatorIme : "(nepoznat)") + ".\n\n" +
+                    "Možete pregledati druge dostupne igračke na PlayForward platformi.\n\n" +
+                    "Srdačan pozdrav,\nPlayForward tim";
+
+            message.setText(tekst);
+            mailSender.send(message);
+            log.info("Poslan email primatelju: {} za odbijanje zahtjeva", to);
+        } catch (Exception ex) {
+            log.warn("Neuspjelo slanje emaila za odbijanje.", ex);
+        }
+    }
+
+    @Async
+    public void sendPostagePaidNotificationAsync(String to, String primateljIme, String igrackaNaziv) {
+        if (to == null || to.isBlank()) {
+            log.warn("Email donatora nije definiran, preskacem slanje obavijesti o placanju postarine.");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            if (fromAddress != null) {
+                message.setFrom(fromAddress);
+            }
+            message.setSubject("Poštarina plaćena - PlayForward");
+
+            String tekst = "Poštovani,\n\n" +
+                    "Korisnik " + (primateljIme != null ? primateljIme : "(nepoznat)") +
+                    " je platio poštarinu za igračku \"" + (igrackaNaziv != null ? igrackaNaziv : "(nepoznato)") + "\".\n\n" +
+                    "Molimo vas da igračku pošaljete ili pripremite za preuzimanje.\n" +
+                    "Nakon što primatelj preuzme igračku, potvrdite preuzimanje na PlayForward platformi.\n\n" +
+                    "Srdačan pozdrav,\nPlayForward tim";
+
+            message.setText(tekst);
+            mailSender.send(message);
+            log.info("Poslan email donatoru: {} za placenu postarinu", to);
+        } catch (Exception ex) {
+            log.warn("Neuspjelo slanje emaila za placenu postarinu.", ex);
+        }
+    }
+
+    @Async
+    public void sendPickupConfirmedNotificationAsync(String to, String donatorIme, String igrackaNaziv) {
+        if (to == null || to.isBlank()) {
+            log.warn("Email primatelja nije definiran, preskacem slanje obavijesti o preuzimanju.");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            if (fromAddress != null) {
+                message.setFrom(fromAddress);
+            }
+            message.setSubject("Preuzimanje potvrđeno - PlayForward");
+
+            String tekst = "Poštovani,\n\n" +
+                    "Donator " + (donatorIme != null ? donatorIme : "(nepoznat)") +
+                    " je potvrdio da je igračka \"" + (igrackaNaziv != null ? igrackaNaziv : "(nepoznato)") +
+                    "\" poslana ili preuzeta.\n\n" +
+                    "Hvala što koristite PlayForward! Možete ostaviti recenziju donatoru na platformi.\n\n" +
+                    "Srdačan pozdrav,\nPlayForward tim";
+
+            message.setText(tekst);
+            mailSender.send(message);
+            log.info("Poslan email primatelju: {} za potvrdu preuzimanja", to);
+        } catch (Exception ex) {
+            log.warn("Neuspjelo slanje emaila za potvrdu preuzimanja.", ex);
+        }
+    }
 }

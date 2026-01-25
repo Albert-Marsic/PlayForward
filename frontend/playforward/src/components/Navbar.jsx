@@ -1,22 +1,10 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Search, Heart } from 'lucide-react'
-import { useState } from 'react'
+import { Gift } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { useCart } from '@/context/CartContext'
 
 export default function Navbar() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const navigate = useNavigate()
   const { user, loading, logout } = useAuth()
-  const { cartItems } = useCart()
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    const trimmed = searchQuery.trim()
-    const query = trimmed ? `?search=${encodeURIComponent(trimmed)}` : ''
-    navigate(`/igracke${query}`)
-  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/60 backdrop-blur-sm shadow-md z-50 border-b border-gray-200/50">
@@ -31,33 +19,22 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-xl">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Pretraži igračke..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pl-10 rounded-full border"
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
-          </form>
+          {/* Browse Toys Button */}
+          <div className="flex-1 flex justify-center">
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 animate-pulse hover:animate-none"
+            >
+              <Link to="/igracke" className="flex items-center gap-2">
+                <Gift className="w-5 h-5" />
+                <span className="font-semibold">Pogledaj igračke</span>
+              </Link>
+            </Button>
+          </div>
 
           {/* Right */}
           <div className="flex items-center gap-3">
-
-            {/* Odabrane igračke */}
-            <Link to="/kosarica" className="relative" title="Odabrane igračke">
-              <Heart className="w-6 h-6" />
-              {cartItems.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full px-1.5">
-                  {cartItems.length}
-                </span>
-              )}
-            </Link>
-
             {user ? (
               <>
                 <Button variant="ghost" asChild>

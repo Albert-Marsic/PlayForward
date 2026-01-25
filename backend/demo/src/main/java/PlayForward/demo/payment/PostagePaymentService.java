@@ -1,8 +1,11 @@
 package PlayForward.demo.payment;
 
+import PlayForward.demo.listing.Igracka;
+import PlayForward.demo.mail.EmailService;
 import PlayForward.demo.request.StatusZahtjeva;
 import PlayForward.demo.request.Zahtjev;
 import PlayForward.demo.request.ZahtjevRepository;
+import PlayForward.demo.user.Donator;
 import PlayForward.demo.user.KorisnikRepository;
 import PlayForward.demo.user.Primatelj;
 import PlayForward.demo.user.PrimateljRepository;
@@ -23,17 +26,20 @@ public class PostagePaymentService {
     private final ZahtjevRepository zahtjevRepo;
     private final KorisnikRepository korisnikRepo;
     private final PrimateljRepository primateljRepo;
+    private final EmailService emailService;
     private final BigDecimal defaultPostageAmount;
 
     public PostagePaymentService(PayPalService payPalService,
                                  ZahtjevRepository zahtjevRepo,
                                  KorisnikRepository korisnikRepo,
                                  PrimateljRepository primateljRepo,
+                                 EmailService emailService,
                                  @Value("${app.postage.amount:5.00}") String postageAmount) {
         this.payPalService = payPalService;
         this.zahtjevRepo = zahtjevRepo;
         this.korisnikRepo = korisnikRepo;
         this.primateljRepo = primateljRepo;
+        this.emailService = emailService;
         this.defaultPostageAmount = parseAmount(postageAmount);
     }
 
@@ -149,7 +155,24 @@ public class PostagePaymentService {
         }
 
         zahtjev.setStatus(StatusZahtjeva.POSTAGE_PAID);
-        return zahtjevRepo.save(zahtjev);
+        Zahtjev savedZahtjev = zahtjevRepo.save(zahtjev);
+
+        // Notify donor that postage was paid
+        Donator donator = zahtjev.getDonator();
+        Igracka igracka = zahtjev.getIgracka();
+        if (donator != null && donator.getKorisnik() != null
+                && donator.getKorisnik().getEmail() != null) {
+            String primateljIme = (primatelj.getKorisnik() != null && primatelj.getKorisnik().getImeKorisnik() != null)
+                    ? primatelj.getKorisnik().getImeKorisnik()
+                    : "Primatelj";
+            String igrackaNaziv = igracka != null ? igracka.getNaziv() : "Igračka";
+            emailService.sendPostagePaidNotificationAsync(
+                    donator.getKorisnik().getEmail(),
+                    primateljIme,
+                    igrackaNaziv);
+        }
+
+        return savedZahtjev;
     }
 
     private Primatelj currentPrimateljOrThrow() {
