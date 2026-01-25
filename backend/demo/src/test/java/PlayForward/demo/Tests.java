@@ -36,7 +36,6 @@ class Tests {
 
     @BeforeEach
     void setup() {
-        // Create typed mocks
         zahtjevRepo = mock(ZahtjevRepository.class);
         korisnikRepo = mock(KorisnikRepository.class);
         donatorRepo = mock(DonatorRepository.class);
