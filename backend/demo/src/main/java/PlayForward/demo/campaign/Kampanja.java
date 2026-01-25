@@ -54,4 +54,6 @@ public class Kampanja {
     // helper metode (nije obavezno, ali korisno)
     public void addStavka(PopisIgracaka s) { popisi.add(s); s.setKampanja(this); }
     public void removeStavka(PopisIgracaka s) { popisi.remove(s); s.setKampanja(null); }
+
+    public void setId(long l) { this.id = l; }
 }

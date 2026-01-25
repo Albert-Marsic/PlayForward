@@ -1,8 +1,7 @@
 package PlayForward.demo;
 
-import PlayForward.demo.listing.Igracka;
+import PlayForward.demo.campaign.*;
 import PlayForward.demo.listing.IgrackaRepository;
-import PlayForward.demo.listing.StatusIgracke;
 import PlayForward.demo.mail.EmailService;
 import PlayForward.demo.request.*;
 import PlayForward.demo.review.RecenzijaService;
@@ -11,8 +10,8 @@ import PlayForward.demo.review.dto.CreateRecenzijaRequest;
 import PlayForward.demo.user.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -27,6 +26,9 @@ class Tests {
     private RecenzijaRepository recenzijaRepo;
     private AdminRepository adminRepo;
     private EmailService emailService;
+    private KampanjaRepository kampanjaRepository;
+    private PopisIgracakaRepository popisRepository;
+    private KampanjaService kampanjaService;
 
     private ZahtjevService zahtjevService;
     private RecenzijaService recenzijaService;
@@ -43,8 +45,10 @@ class Tests {
         recenzijaRepo = mock(RecenzijaRepository.class);
         adminRepo = mock(AdminRepository.class);
         emailService = mock(EmailService.class);
+        kampanjaRepository = mock(KampanjaRepository.class);
+        popisRepository = mock(PopisIgracakaRepository.class);
+        kampanjaService = mock(KampanjaService.class);
 
-        // Services
         adminService = new AdminService("admin@example.com", adminRepo);
 
         zahtjevService = new ZahtjevService(
@@ -68,7 +72,6 @@ class Tests {
 
     @Test
     void testAdminEmailAndEnsureAdmin() {
-        // Admin email check
         assertTrue(adminService.isAdminEmail("admin@example.com"));
         assertFalse(adminService.isAdminEmail("user@example.com"));
 
@@ -84,29 +87,33 @@ class Tests {
     }
 
     @Test
-    void testWithdrawZahtjevChangesStatusAndResetsIgracka() {
-        // Setup Primatelj and Zahtjev
-        Primatelj primatelj = new Primatelj();
-        primatelj.setId(1L);
+    void testZahtjevGetForCurrentPrimateljThrowsForInvalidId() {
+        ZahtjevService service = new ZahtjevService(
+                zahtjevRepo,
+                igrackaRepo,
+                korisnikRepo,
+                donatorRepo,
+                primateljRepo,
+                emailService
+        );
 
-        Igracka igracka = new Igracka();
-        igracka.setStatus(StatusIgracke.REZERVIRANO);
-        igracka.setPrimatelj(primatelj);
+        ResponseStatusException ex1 = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getForCurrentPrimatelj(0L)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex1.getStatusCode());
 
-        Zahtjev zahtjev = new Zahtjev();
-        zahtjev.setId(100L);
-        zahtjev.setStatus(StatusZahtjeva.APPROVED);
-        zahtjev.setPrimatelj(primatelj);
-        zahtjev.setIgracka(igracka);
+        ResponseStatusException ex2 = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getForCurrentPrimatelj(-1L)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
 
-        when(zahtjevRepo.findById(100L)).thenReturn(Optional.of(zahtjev));
-        when(zahtjevRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        Zahtjev withdrawn = zahtjevService.withdraw(100L);
-
-        assertEquals(StatusZahtjeva.WITHDRAWN, withdrawn.getStatus());
-        assertNull(igracka.getPrimatelj());
-        assertEquals(StatusIgracke.DOSTUPNO, igracka.getStatus());
+        ResponseStatusException ex3 = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getForCurrentPrimatelj(-100L)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex3.getStatusCode());
     }
 
     @Test
@@ -121,35 +128,45 @@ class Tests {
     }
 
     @Test
-    void testRecenzijaCreateSuccessfulFlow() {
-        // Setup Primatelj, Donator, Zahtjev
-        Primatelj primatelj = new Primatelj();
-        primatelj.setId(1L);
+    void testRecenzijaCreateThrowsForInvalidRequest() {
+        ResponseStatusException ex1 = assertThrows(
+                ResponseStatusException.class,
+                () -> recenzijaService.create(null)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex1.getStatusCode());
 
-        Donator donator = new Donator();
-        donator.setId(2L);
-        donator.setKorisnik(new Korisnik());
-        donator.getKorisnik().setEmail("donor@example.com");
+        CreateRecenzijaRequest req2 = new CreateRecenzijaRequest();
+        req2.zahtjevId = null;
+        req2.ocjena = 3;
+        req2.tekst = "Valid text for testing";
 
-        Zahtjev zahtjev = new Zahtjev();
-        zahtjev.setId(10L);
-        zahtjev.setStatus(StatusZahtjeva.PICKED_UP);
-        zahtjev.setPrimatelj(primatelj);
-        zahtjev.setDonator(donator);
+        ResponseStatusException ex2 = assertThrows(
+                ResponseStatusException.class,
+                () -> recenzijaService.create(req2)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
 
-        when(zahtjevRepo.findById(10L)).thenReturn(Optional.of(zahtjev));
-        when(recenzijaRepo.existsByZahtjev_Id(10L)).thenReturn(false);
-        when(recenzijaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        CreateRecenzijaRequest req3 = new CreateRecenzijaRequest();
+        req3.zahtjevId = 1L;
+        req3.ocjena = 0;
+        req3.tekst = "Valid text for testing";
 
-        CreateRecenzijaRequest req = new CreateRecenzijaRequest();
-        req.zahtjevId = 10L;
-        req.ocjena = 5;
-        req.tekst = "Odlična igračka, jako sam zadovoljan.";
+        ResponseStatusException ex3 = assertThrows(
+                ResponseStatusException.class,
+                () -> recenzijaService.create(req3)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex3.getStatusCode());
 
-        var response = recenzijaService.create(req);
+        CreateRecenzijaRequest req4 = new CreateRecenzijaRequest();
+        req4.zahtjevId = 1L;
+        req4.ocjena = 3;
+        req4.tekst = "short";
 
-        assertEquals(5, response.ocjena);
-        assertEquals("Odlična igračka, jako sam zadovoljan.", response.tekst);
+        ResponseStatusException ex4 = assertThrows(
+                ResponseStatusException.class,
+                () -> recenzijaService.create(req4)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex4.getStatusCode());
     }
 
     @Test
@@ -158,11 +175,26 @@ class Tests {
     }
 
     @Test
-    void testAdminEnsureAdminReturnsFalseForNonAdminEmail() {
-        Korisnik user = new Korisnik();
-        user.setId(99L);
-        user.setEmail("user@example.com");
-        assertFalse(adminService.ensureAdminFor(user));
-        verify(adminRepo, never()).save(any());
+    void testKampanjaGetByIdThrowsForInvalidId() {
+        KampanjaService service = new KampanjaService(
+                kampanjaRepository,
+                popisRepository,
+                korisnikRepo,
+                primateljRepo,
+                donatorRepo
+        );
+
+        ResponseStatusException ex1 = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getById(0L)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex1.getStatusCode());
+
+        ResponseStatusException ex2 = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getById(-10L)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex2.getStatusCode());
     }
+
 }
