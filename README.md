@@ -93,7 +93,7 @@ Ako varijable nisu zadane, aplikacija koristi lokalne vrijednosti iz konfiguraci
 
 # Članovi tima 
 - [Ante Boban](https://github.com/ab010404)
-- [Filip Radanović](https://github.com/ficoki)
+- [Filip Radovanović](https://github.com/ficoki)
 - [Filip Tojčić](https://github.com/filiptojcic)
 - [Hrvoje Juračić](https://github.com/hrvojejuracic)
 - [Martin Vrbovčan](https://github.com/MartinVrbovcan)
